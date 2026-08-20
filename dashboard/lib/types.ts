@@ -9,6 +9,7 @@ export interface KernelEvent {
   event_type: "file_open" | "exec_spawn" | "net_connect";
   filename: string;
   severity: "critical" | "high" | "medium" | "low";
+  attack_type?: string;
 }
 
 export interface ProcessNodeData extends Record<string, unknown> {
@@ -16,6 +17,7 @@ export interface ProcessNodeData extends Record<string, unknown> {
   ppid: number;
   comm: string;
   severity: "critical" | "high" | "medium" | "low";
+  attack_type?: string;
   events: KernelEvent[];
   hasDotEnvAccess: boolean;
   isKilled: boolean;

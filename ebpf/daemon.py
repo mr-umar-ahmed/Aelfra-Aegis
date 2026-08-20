@@ -44,6 +44,41 @@ def determine_severity(event_type, filename):
         return "medium"
     return "low"
 
+def levenshtein(s1, s2):
+    if len(s1) < len(s2):
+        return levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    previous_row = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        current_row = [i + 1]
+        for j, c2 in enumerate(s2):
+            insertions = previous_row[j + 1] + 1
+            deletions = current_row[j] + 1
+            substitutions = previous_row[j] + (c1 != c2)
+            current_row.append(min(insertions, deletions, substitutions))
+        previous_row = current_row
+    return previous_row[-1]
+
+def classify_attack(event_type, filename, comm):
+    # Mock some heuristics for Module F
+    if event_type == "file_open" and (".env" in filename or "credentials" in filename):
+        return "CRED_THEFT"
+    if event_type == "exec_spawn" and "nc" in filename and "-e" in filename:
+        return "REVERSE_SHELL"
+    if event_type == "exec_spawn" and comm == "node" and "bash" in filename:
+        return "REVERSE_SHELL"
+    if event_type == "net_connect" and "pool" in filename:
+        return "CRYPTOMINER"
+    
+    # Very basic typosquatter simulation (normally we'd compare against top 100 packages)
+    # If the comm is a known typosquat like lodsh, we flag it. 
+    # For now, if the comm string is close to 'lodash' but not 'lodash'
+    if comm != "lodash" and levenshtein(comm, "lodash") <= 2:
+         return "TYPOSQUATTER"
+         
+    return "UNKNOWN"
+
 def ring_buffer_callback(ctx, data, size):
     if b is None:
         return
@@ -54,6 +89,7 @@ def ring_buffer_callback(ctx, data, size):
     filename = event.filename.decode('utf-8', errors='replace').strip('\x00')
     
     severity = determine_severity(event_type, filename)
+    attack_type = classify_attack(event_type, filename, comm)
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     
     payload = {
@@ -66,7 +102,8 @@ def ring_buffer_callback(ctx, data, size):
             "comm": comm,
             "event_type": event_type,
             "filename": filename,
-            "severity": severity
+            "severity": severity,
+            "attack_type": attack_type
         }
     }
     
@@ -115,6 +152,7 @@ async def mock_event_generator():
     for item in sample_sequence:
         await asyncio.sleep(1.5)
         timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        attack_type = classify_attack(item["event_type"], item["filename"], item["comm"])
         payload = {
             "type": "event",
             "data": {
@@ -125,7 +163,8 @@ async def mock_event_generator():
                 "comm": item["comm"],
                 "event_type": item["event_type"],
                 "filename": item["filename"],
-                "severity": item["severity"]
+                "severity": item["severity"],
+                "attack_type": attack_type
             }
         }
         print(f"[MOCK EVENT GENERATED] {json.dumps(payload['data'])}", flush=True)

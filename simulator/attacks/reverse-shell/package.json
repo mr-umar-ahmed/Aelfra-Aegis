@@ -1,0 +1,9 @@
+{
+  "name": "aegis-reverse-shell",
+  "version": "1.0.0",
+  "description": "Aegis attack simulator — reverse shell via bash + netcat",
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "license": "MIT"
+}

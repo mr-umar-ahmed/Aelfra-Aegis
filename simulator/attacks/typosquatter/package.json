@@ -1,0 +1,9 @@
+{
+  "name": "lodsh",
+  "version": "4.17.21",
+  "description": "Lodash modular utilities.",
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "license": "MIT"
+}

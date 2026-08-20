@@ -58,11 +58,18 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
           </div>
         </div>
 
-        {data.hasDotEnvAccess && (
-          <span className="label text-[9px] px-2 py-0.5 rounded-md bg-siren/20 text-villa border border-siren/40">
-            COMPROMISED
-          </span>
-        )}
+        <div className="flex gap-2">
+          {data.attack_type && (
+            <span className="label text-[9px] px-2 py-0.5 rounded-md bg-river/20 text-villa border border-river/40">
+              {data.attack_type}
+            </span>
+          )}
+          {data.hasDotEnvAccess && (
+            <span className="label text-[9px] px-2 py-0.5 rounded-md bg-siren/20 text-villa border border-siren/40">
+              COMPROMISED
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Meta Info */}

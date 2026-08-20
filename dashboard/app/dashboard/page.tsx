@@ -60,6 +60,7 @@ export default function DashboardPage() {
               events: [...targetNode.data.events, event],
               hasDotEnvAccess: hasDotEnv,
               severity: isDotEnv ? "critical" : targetNode.data.severity,
+              attack_type: (event.attack_type && event.attack_type !== "UNKNOWN") ? event.attack_type : targetNode.data.attack_type,
             },
           };
         } else {
@@ -72,6 +73,7 @@ export default function DashboardPage() {
               ppid: event.ppid,
               comm: event.comm,
               severity: isDotEnv ? "critical" : event.severity,
+              attack_type: event.attack_type,
               events: [event],
               hasDotEnvAccess: isDotEnv,
               isKilled: false,
@@ -94,6 +96,7 @@ export default function DashboardPage() {
                 ppid: 0,
                 comm: "parent",
                 severity: "low",
+                attack_type: undefined,
                 events: [],
                 hasDotEnvAccess: false,
                 isKilled: false,
