@@ -47,6 +47,15 @@ export interface EventEdgeData extends Record<string, unknown> {
 
 export type EventEdge = Edge<EventEdgeData>;
 
+export interface NarrationMessage {
+  type: "narration";
+  pid: number;
+  text: string;
+  timestamp: string;
+  attack_type: string;
+}
+
 export type WSMessage =
   | { type: "event"; data: KernelEvent }
-  | { type: "kill_result"; pid: number; success: boolean; message: string };
+  | { type: "kill_result"; pid: number; success: boolean; message: string }
+  | NarrationMessage;

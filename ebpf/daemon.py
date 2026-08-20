@@ -74,6 +74,88 @@ class IPCache:
 
 ip_cache = IPCache()
 
+# --- Module E: Narration State ---
+pid_events: dict = {}       # pid -> list of events
+pid_first_seen: dict = {}   # pid -> timestamp of first event
+narrated_pids: set = set()  # pids already narrated
+
+def accumulate_event(event_payload: dict):
+    pid = event_payload["pid"]
+    now = time.time()
+    if pid not in pid_events:
+        pid_events[pid] = []
+        pid_first_seen[pid] = now
+    pid_events[pid].append(event_payload)
+
+async def narrate_attack(events: list) -> str:
+    url = "https://api.anthropic.com/v1/messages"
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+    headers = {
+        "x-api-key": api_key,
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json"
+    }
+    body = {
+        "model": "claude-sonnet-4-6",
+        "max_tokens": 300,
+        "system": "You are a threat intelligence analyst. You receive raw eBPF syscall events from a Linux system. Write a 3-sentence plain-English threat narrative: what happened, what the attacker was trying to do, and what known attack family this resembles. Be specific and technical. Do not use bullet points.",
+        "messages": [
+            {"role": "user", "content": json.dumps(events)}
+        ]
+    }
+    
+    def fetch():
+        if not api_key:
+            return "No ANTHROPIC_API_KEY set. Cannot narrate attack."
+        req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                result = json.loads(resp.read().decode("utf-8"))
+                return result["content"][0]["text"]
+        except Exception as e:
+            print(f"[Narration Error] {e}", flush=True)
+            return f"Failed to generate narration: {str(e)}"
+            
+    return await asyncio.to_thread(fetch)
+
+async def check_chains():
+    """Runs periodically in the background to detect complete attack chains."""
+    while True:
+        now = time.time()
+        for pid, first_ts in list(pid_first_seen.items()):
+            if now - first_ts >= 30 and pid not in narrated_pids:
+                events = pid_events[pid]
+                has_file = any(e["event_type"] == "file_open" for e in events)
+                has_exec = any(e["event_type"] == "exec_spawn" for e in events)
+                
+                if has_file and has_exec:
+                    print(f"[DAEMON] Triggering narration for PID {pid}", flush=True)
+                    narration_text = await narrate_attack(events)
+                    narrated_pids.add(pid)
+                    
+                    attack_type = "UNKNOWN"
+                    for e in events:
+                        if e.get("attack_type") and e.get("attack_type") != "UNKNOWN":
+                            attack_type = e["attack_type"]
+                            break
+
+                    timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
+                    payload = {
+                        "type": "narration",
+                        "pid": pid,
+                        "text": narration_text,
+                        "timestamp": timestamp,
+                        "attack_type": attack_type
+                    }
+                    
+                    if connected_clients:
+                        message = json.dumps(payload)
+                        await asyncio.gather(
+                            *[client.send(message) for client in connected_clients],
+                            return_exceptions=True
+                        )
+        await asyncio.sleep(2)
+
 def determine_severity(event_type, filename):
     if event_type == "file_open" and ".env" in filename:
         return "critical"
@@ -162,6 +244,8 @@ def ring_buffer_callback(ctx, data, size):
         payload["data"]["dest_ip"] = dest_ip
         payload["data"]["dest_port"] = dest_port
     
+    accumulate_event(payload["data"])
+    
     print(f"[DAEMON EVENT] {json.dumps(payload['data'])}", flush=True)
 
     if main_loop and event_queue:
@@ -225,6 +309,8 @@ async def mock_event_generator():
         if item["event_type"] == "network":
             payload["data"]["dest_ip"] = item.get("dest_ip")
             payload["data"]["dest_port"] = item.get("dest_port")
+
+        accumulate_event(payload["data"])
 
         print(f"[MOCK EVENT GENERATED] {json.dumps(payload['data'])}", flush=True)
         if event_queue:
@@ -332,6 +418,7 @@ async def main_async():
             print(f"[ERROR] C probe file missing at {C_PROBE_PATH}", file=sys.stderr)
 
     asyncio.create_task(broadcast_worker())
+    asyncio.create_task(check_chains())
 
     async with websockets.serve(ws_handler, WS_HOST, WS_PORT):
         print(f"[DAEMON] WebSocket server active on ws://{WS_HOST}:{WS_PORT}", flush=True)

@@ -3,7 +3,8 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNodesState, useEdgesState } from "@xyflow/react";
 import { FlowGraph } from "@/components/flow-graph";
-import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage } from "@/lib/types";
+import { ThreatPanel } from "@/components/threat-panel";
+import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage, NarrationMessage } from "@/lib/types";
 import { autoLayoutNodes } from "@/lib/layout";
 import {
   Shield,
@@ -27,6 +28,7 @@ export default function DashboardPage() {
   const [edges, setEdges, onEdgesChange] = useEdgesState<EventEdge>([]);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const [eventLogs, setEventLogs] = useState<KernelEvent[]>([]);
+  const [narrations, setNarrations] = useState<NarrationMessage[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const wsRef = useRef<WebSocket | null>(null);
@@ -230,6 +232,8 @@ export default function DashboardPage() {
             handleIncomingEvent(payload.data);
           } else if (payload.type === "kill_result") {
             handleKillResult(payload.pid, payload.success);
+          } else if (payload.type === "narration") {
+            setNarrations((prev) => [payload, ...prev].slice(0, 5));
           }
         } catch (e) {
           console.error("Failed to parse WS message", e);
@@ -364,13 +368,16 @@ export default function DashboardPage() {
           {/* Graph Panel */}
           <div className="flex-1 flex flex-col min-w-0">
             {/* Graph Card */}
-            <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden relative">
-              <FlowGraph
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-              />
+            <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden flex flex-col">
+              <div className="flex-1 relative">
+                <FlowGraph
+                  nodes={nodes}
+                  edges={edges}
+                  onNodesChange={onNodesChange}
+                  onEdgesChange={onEdgesChange}
+                />
+              </div>
+              <ThreatPanel narrations={narrations} />
             </div>
 
             {/* Stats Strip — Metric Cards */}
