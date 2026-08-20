@@ -1,87 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
 @import "@xyflow/react/dist/style.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg-gradient: radial-gradient(circle at 50% -20%, #1e1b4b 0%, #030712 75%);
-}
-
+/* ─── Base ─── */
 body {
-  background: var(--bg-gradient);
-  background-attachment: fixed;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #E2E0C8;
+  color: #4E635E;
+  font-family: "Inter", system-ui, sans-serif;
+  font-weight: 400;
   margin: 0;
   overflow: hidden;
 }
 
-/* Glassmorphism Panel Utilities */
-.glass-panel {
-  background: rgba(15, 23, 42, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+/* ─── Typography Utilities ─── */
+.heading {
+  font-weight: 800;
+  letter-spacing: -0.03em;
 }
 
-.glass-card {
-  background: rgba(30, 41, 59, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+.label {
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 11px;
 }
 
-/* Custom Glowing Border Animations */
-@keyframes neonGlowRed {
-  0%, 100% {
-    box-shadow: 0 0 15px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(239, 68, 68, 0.2);
-  }
-  50% {
-    box-shadow: 0 0 25px rgba(239, 68, 68, 0.7), inset 0 0 15px rgba(239, 68, 68, 0.3);
-  }
+/* ─── Danger Pulse (Siren Song, NOT red) ─── */
+@keyframes danger-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(166, 180, 158, 0.5); }
+  50%      { box-shadow: 0 0 0 8px rgba(166, 180, 158, 0); }
+}
+.danger-pulse {
+  animation: danger-pulse 2s infinite ease-in-out;
 }
 
-.glow-red {
-  animation: neonGlowRed 2s infinite ease-in-out;
+/* ─── Animated Dash for Active Edges ─── */
+@keyframes dash-flow {
+  to { stroke-dashoffset: -20; }
 }
 
-/* Custom Scrollbar */
+/* ─── Custom Scrollbar ─── */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
-
 ::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: #E2E0C8;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(51, 65, 85, 0.8);
+  background: #818C78;
   border-radius: 9999px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(6, 182, 212, 0.8);
+  background: #4E635E;
 }
 
-/* React Flow Styling Overrides */
+/* ─── React Flow Overrides ─── */
 .react-flow__node {
-  border-radius: 1rem;
+  border-radius: 6px;
 }
 
 .react-flow__edge-path {
-  stroke-width: 2.5px;
+  stroke-width: 2px;
   transition: stroke 0.3s ease;
 }
 
 .react-flow__controls button {
-  background: rgba(15, 23, 42, 0.8) !important;
-  border-color: rgba(51, 65, 85, 0.8) !important;
-  color: #94a3b8 !important;
-  border-radius: 0.5rem !important;
+  background: #4E635E !important;
+  border-color: #818C78 !important;
+  color: #E2E0C8 !important;
+  border-radius: 4px !important;
 }
 
 .react-flow__controls button:hover {
-  background: rgba(30, 41, 59, 1) !important;
-  color: #38bdf8 !important;
+  background: #818C78 !important;
+  color: #E2E0C8 !important;
+}
+
+/* ─── React Flow Background Override ─── */
+.react-flow__background {
+  background: #E2E0C8 !important;
 }

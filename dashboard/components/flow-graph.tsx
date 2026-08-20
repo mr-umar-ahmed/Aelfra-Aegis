@@ -6,23 +6,22 @@ import {
   Background,
   Controls,
   MiniMap,
-  Node,
-  Edge,
   OnNodesChange,
   OnEdgesChange,
   BackgroundVariant,
 } from "@xyflow/react";
-import { ProcessNode } from "./process-node";
+import { ProcessNode as ProcessNodeComponent } from "./process-node";
+import type { ProcessNode, EventEdge } from "@/lib/types";
 
 interface FlowGraphProps {
-  nodes: Node[];
-  edges: Edge[];
-  onNodesChange: OnNodesChange;
-  onEdgesChange: OnEdgesChange;
+  nodes: ProcessNode[];
+  edges: EventEdge[];
+  onNodesChange?: OnNodesChange<ProcessNode>;
+  onEdgesChange?: OnEdgesChange<EventEdge>;
 }
 
 export function FlowGraph({ nodes, edges, onNodesChange, onEdgesChange }: FlowGraphProps) {
-  const nodeTypes = useMemo(() => ({ processNode: ProcessNode }), []);
+  const nodeTypes = useMemo(() => ({ processNode: ProcessNodeComponent }), []);
 
   return (
     <div className="w-full h-full relative">
@@ -37,20 +36,20 @@ export function FlowGraph({ nodes, edges, onNodesChange, onEdgesChange }: FlowGr
         maxZoom={2}
         defaultEdgeOptions={{
           animated: true,
-          style: { strokeWidth: 2.5 },
+          style: { stroke: "#818C78", strokeWidth: 2 },
         }}
       >
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1.5} color="#334155" />
-        <Controls className="!bg-slate-900/90 !border-slate-800 !text-slate-300 rounded-xl shadow-xl backdrop-blur-md" />
+        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#A6B49E" />
+        <Controls className="!bg-ocean !border-river !text-villa rounded-md" />
         <MiniMap
           nodeColor={(node) => {
-            if (node.data?.hasDotEnvAccess) return "#ef4444";
-            if (node.data?.severity === "high") return "#f97316";
-            if (node.data?.severity === "medium") return "#eab308";
-            return "#06b6d4";
+            if (node.data?.hasDotEnvAccess) return "#A6B49E";
+            if (node.data?.severity === "high") return "#818C78";
+            if (node.data?.severity === "medium") return "#818C78";
+            return "#4E635E";
           }}
-          maskColor="rgba(15, 23, 42, 0.7)"
-          className="!bg-slate-900/90 !border-slate-800 rounded-2xl shadow-2xl backdrop-blur-md"
+          maskColor="rgba(226, 224, 200, 0.5)"
+          className="!bg-villa !border-river rounded-md"
         />
       </ReactFlow>
     </div>

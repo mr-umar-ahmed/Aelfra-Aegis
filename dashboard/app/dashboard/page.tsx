@@ -7,16 +7,17 @@ import type { KernelEvent, ProcessNode, EventEdge, WSMessage } from "@/lib/types
 import { autoLayoutNodes } from "@/lib/layout";
 import {
   Shield,
-  Radio,
   Activity,
   Terminal,
   AlertTriangle,
   Search,
   Zap,
-  ShieldCheck,
   Flame,
   Filter,
   CheckCircle2,
+  BarChart3,
+  Network,
+  Eye,
 } from "lucide-react";
 
 const WS_URL = "ws://localhost:8765";
@@ -115,9 +116,6 @@ export default function DashboardPage() {
             ? "exec spawn"
             : "net connect";
 
-        const strokeColor =
-          isDotEnv ? "#ef4444" : event.event_type === "net_connect" ? "#f97316" : "#06b6d4";
-
         setEdges((prevEdges: EventEdge[]) => {
           if (prevEdges.some((e: EventEdge) => e.id === edgeId)) return prevEdges;
           return [
@@ -128,7 +126,7 @@ export default function DashboardPage() {
               target: nodeId,
               label: edgeLabel,
               animated: true,
-              style: { stroke: strokeColor, strokeWidth: 2.5 },
+              style: { stroke: "#818C78", strokeWidth: 2 },
               data: {
                 eventType: event.event_type,
                 filename: event.filename,
@@ -207,164 +205,229 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
-      {/* Top Header Navigation */}
-      <header className="h-16 border-b border-slate-800/80 glass-panel px-6 flex items-center justify-between z-20 shadow-2xl">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 shadow-lg shadow-cyan-500/30 border border-cyan-400/30">
-            <Shield className="w-5 h-5 text-white" />
-          </div>
-          <div>
-            <h1 className="font-black text-lg tracking-wider text-slate-100 flex items-center gap-2 font-mono">
-              AELFRA AEGIS <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold tracking-widest">v1.0 eBPF</span>
-            </h1>
-            <p className="text-[11px] text-slate-400 font-mono">Supply Chain Attack Detector & Provenance Graph</p>
+    <div className="flex h-screen w-screen overflow-hidden">
+      {/* ─── Left Sidebar (240px) ─── */}
+      <aside className="w-60 bg-ocean text-villa flex flex-col shrink-0 border-r border-river/40">
+        {/* App Identity */}
+        <div className="px-5 py-5 border-b border-river/30">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-md bg-villa/10 border border-river/30">
+              <Shield className="w-5 h-5 text-villa" />
+            </div>
+            <div>
+              <h1 className="heading text-lg text-villa">AEGIS</h1>
+              <p className="text-[10px] text-siren tracking-label">eBPF Runtime Guard</p>
+            </div>
           </div>
         </div>
 
-        {/* Live System Metrics */}
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 bg-slate-900/80 px-4 py-2 rounded-2xl border border-slate-800 text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-cyan-400" />
-              <span className="text-slate-400">Processes:</span>
-              <span className="font-extrabold text-cyan-400">{nodes.length}</span>
+        {/* Navigation */}
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          <a className="flex items-center gap-2.5 px-3 py-2 rounded-md bg-villa/10 text-villa text-sm font-semibold">
+            <Eye className="w-4 h-4" />
+            <span>Process Graph</span>
+          </a>
+          <a className="flex items-center gap-2.5 px-3 py-2 rounded-md text-siren hover:bg-villa/5 text-sm transition-colors cursor-pointer">
+            <Zap className="w-4 h-4" />
+            <span>Event Stream</span>
+          </a>
+          <a className="flex items-center gap-2.5 px-3 py-2 rounded-md text-siren hover:bg-villa/5 text-sm transition-colors cursor-pointer">
+            <BarChart3 className="w-4 h-4" />
+            <span>Analytics</span>
+          </a>
+          <a className="flex items-center gap-2.5 px-3 py-2 rounded-md text-siren hover:bg-villa/5 text-sm transition-colors cursor-pointer">
+            <Network className="w-4 h-4" />
+            <span>Network Map</span>
+          </a>
+        </nav>
+
+        {/* Sidebar Footer — System Info */}
+        <div className="px-4 py-3 border-t border-river/30 text-[10px] text-siren space-y-1">
+          <div className="flex justify-between">
+            <span>Kernel Probes</span>
+            <span className="text-villa font-semibold">openat · execve · connect</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Transport</span>
+            <span className="text-villa font-semibold">ws://localhost:8765</span>
+          </div>
+        </div>
+      </aside>
+
+      {/* ─── Main Content Area ─── */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* ─── Top Bar ─── */}
+        <header className="h-14 bg-ocean border-b border-river/40 px-6 flex items-center justify-between shrink-0">
+          {/* Left: Live Metrics */}
+          <div className="flex items-center gap-5">
+            <div className="flex items-center gap-2 text-villa text-xs">
+              <Activity className="w-3.5 h-3.5 text-siren" />
+              <span className="label text-siren">Processes</span>
+              <span className="heading text-base text-villa">{nodes.length}</span>
             </div>
-            <span className="text-slate-700">|</span>
-            <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-red-400" />
-              <span className="text-slate-400">Compromised:</span>
-              <span className="font-extrabold text-red-400">{compromisedCount}</span>
+            <div className="w-px h-5 bg-river/40" />
+            <div className="flex items-center gap-2 text-villa text-xs">
+              <Flame className="w-3.5 h-3.5 text-siren" />
+              <span className="label text-siren">Compromised</span>
+              <span className="heading text-base text-villa">{compromisedCount}</span>
             </div>
-            <span className="text-slate-700">|</span>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span className="text-slate-400">Killed:</span>
-              <span className="font-extrabold text-emerald-400">{terminatedCount}</span>
+            <div className="w-px h-5 bg-river/40" />
+            <div className="flex items-center gap-2 text-villa text-xs">
+              <CheckCircle2 className="w-3.5 h-3.5 text-siren" />
+              <span className="label text-siren">Killed</span>
+              <span className="heading text-base text-villa">{terminatedCount}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-slate-900/80 border border-slate-800 font-mono text-xs shadow-inner">
-            <Radio className={`w-3.5 h-3.5 ${connectionStatus === "connected" ? "text-emerald-400 animate-pulse" : "text-amber-400"}`} />
-            <span className="font-bold capitalize text-slate-200">{connectionStatus}</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Critical Compromise Alert Banner */}
-      {compromisedCount > 0 && terminatedCount < compromisedCount && (
-        <div className="bg-gradient-to-r from-red-950 via-red-900 to-red-950 border-b border-red-800/80 px-6 py-2 flex items-center justify-between z-10 animate-pulse">
-          <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-200">
-            <AlertTriangle className="w-4 h-4 text-red-400 animate-bounce" />
-            <span>CRITICAL SECURITY ALERT: Active `.env` credential theft detected in process graph! Use the KILL button on compromised nodes to terminate.</span>
-          </div>
-        </div>
-      )}
-
-      {/* Main Graph Canvas & Feed Layout */}
-      <div className="flex flex-1 relative overflow-hidden">
-        {/* React Flow Canvas Container */}
-        <div className="flex-1 h-full relative">
-          <FlowGraph
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-          />
-        </div>
-
-        {/* Live Event Stream Sidebar Drawer */}
-        <div className="w-96 border-l border-slate-800/80 glass-panel flex flex-col h-full z-10">
-          {/* Drawer Header */}
-          <div className="px-4 py-3.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-200 font-mono">
-              <Zap className="w-4 h-4 text-cyan-400" />
-              <span>Kernel Event Stream</span>
-            </div>
-            <span className="text-[11px] bg-slate-800/80 border border-slate-700 px-2 py-0.5 rounded-full text-cyan-400 font-mono font-bold">
-              {filteredLogs.length} live
+          {/* Right: Status */}
+          <div className="flex items-center gap-3">
+            <span className="label text-siren">
+              {eventLogs.length} events
             </span>
+            <div className="flex items-center gap-2 px-3 py-1 rounded-md border border-river/40 bg-ocean">
+              <span className={`w-2 h-2 rounded-full ${connectionStatus === "connected" ? "bg-siren animate-pulse" : "bg-river"}`} />
+              <span className="label text-villa">
+                {connectionStatus === "connected" ? "MONITORING" : connectionStatus === "connecting" ? "CONNECTING" : "OFFLINE"}
+              </span>
+            </div>
           </div>
+        </header>
 
-          {/* Search & Filter Bar */}
-          <div className="p-3 border-b border-slate-800/80 space-y-2 bg-slate-900/20">
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
-              <input
-                type="text"
-                placeholder="Search PID, comm, path..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-950/80 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono transition-all"
+        {/* ─── Critical Alert Banner ─── */}
+        {compromisedCount > 0 && terminatedCount < compromisedCount && (
+          <div className="bg-ocean border-b border-river/40 px-6 py-2 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2 text-xs text-villa">
+              <AlertTriangle className="w-4 h-4 text-siren danger-pulse" />
+              <span className="font-semibold">ALERT: Active credential theft detected — use KILL on compromised nodes to terminate.</span>
+            </div>
+          </div>
+        )}
+
+        {/* ─── Main Area: Graph + Event Sidebar ─── */}
+        <div className="flex flex-1 overflow-hidden">
+          {/* Graph Panel */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Graph Card */}
+            <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden relative">
+              <FlowGraph
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
               />
             </div>
 
-            <div className="flex items-center gap-1 text-[11px] font-mono">
-              <Filter className="w-3 h-3 text-slate-500" />
-              <span className="text-slate-500 mr-1">Filter:</span>
-              {["all", "critical", "high", "medium"].map((sev) => (
-                <button
-                  key={sev}
-                  onClick={() => setFilterSeverity(sev)}
-                  className={`px-2 py-0.5 rounded-lg uppercase text-[10px] font-bold transition-all ${
-                    filterSeverity === sev
-                      ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
-                      : "text-slate-500 hover:text-slate-300"
-                  }`}
-                >
-                  {sev}
-                </button>
-              ))}
+            {/* Stats Strip — 4 Metric Cards */}
+            <div className="mx-4 mb-4 grid grid-cols-4 gap-3">
+              <div className="bg-ocean rounded-md p-3 border border-river/30">
+                <p className="label text-siren mb-1">Total Processes</p>
+                <p className="heading text-2xl text-villa">{nodes.length}</p>
+              </div>
+              <div className="bg-ocean rounded-md p-3 border border-river/30">
+                <p className="label text-siren mb-1">Kernel Events</p>
+                <p className="heading text-2xl text-villa">{eventLogs.length}</p>
+              </div>
+              <div className="bg-ocean rounded-md p-3 border border-river/30">
+                <p className="label text-siren mb-1">Compromised</p>
+                <p className="heading text-2xl text-villa">{compromisedCount}</p>
+              </div>
+              <div className="bg-ocean rounded-md p-3 border border-river/30">
+                <p className="label text-siren mb-1">Terminated</p>
+                <p className="heading text-2xl text-villa">{terminatedCount}</p>
+              </div>
             </div>
           </div>
 
-          {/* Event Stream List */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-2 font-mono text-xs">
-            {filteredLogs.length === 0 ? (
-              <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2">
-                <ShieldCheck className="w-8 h-8 text-slate-700" />
-                <p className="text-center text-xs text-slate-500">Awaiting kernel events...</p>
+          {/* ─── Event Stream Sidebar ─── */}
+          <div className="w-80 bg-ocean border-l border-river/40 flex flex-col shrink-0">
+            {/* Sidebar Header */}
+            <div className="px-4 py-3 border-b border-river/30 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-siren" />
+                <span className="label text-villa">Event Stream</span>
               </div>
-            ) : (
-              filteredLogs.map((evt: KernelEvent, idx: number) => (
-                <div
-                  key={idx}
-                  className={`p-3 rounded-xl border text-xs transition-all duration-200 glass-card ${
-                    evt.severity === "critical"
-                      ? "border-red-500/60 bg-red-950/20 text-red-200 shadow-md shadow-red-500/10"
-                      : evt.severity === "high"
-                      ? "border-orange-500/60 bg-orange-950/20 text-orange-200 shadow-md shadow-orange-500/10"
-                      : evt.severity === "medium"
-                      ? "border-amber-500/40 bg-amber-950/20 text-amber-200"
-                      : "border-slate-800/80 bg-slate-900/50 text-slate-300"
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5 font-bold">
-                    <span
-                      className={`uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-md font-extrabold ${
-                        evt.severity === "critical"
-                          ? "bg-red-900/80 text-red-300 border border-red-700"
-                          : evt.severity === "high"
-                          ? "bg-orange-900/80 text-orange-300 border border-orange-700"
-                          : "bg-slate-800 text-cyan-400 border border-slate-700"
-                      }`}
-                    >
-                      {evt.event_type}
-                    </span>
-                    <span className="text-[10px] text-slate-400 font-mono">PID {evt.pid}</span>
-                  </div>
+              <span className="label text-siren">
+                {filteredLogs.length} live
+              </span>
+            </div>
 
-                  <div className="truncate text-slate-200 font-medium my-1" title={evt.filename}>
-                    {evt.filename}
-                  </div>
+            {/* Search & Filter */}
+            <div className="p-3 border-b border-river/30 space-y-2">
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-siren absolute left-3 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search PID, comm, path..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-ocean border border-river/40 rounded-md pl-8 pr-3 py-1.5 text-xs text-villa placeholder:text-river focus:outline-none focus:border-siren transition-colors"
+                />
+              </div>
 
-                  <div className="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800/60">
-                    <span>comm: <strong className="text-slate-300">{evt.comm}</strong></span>
-                    <span>{new Date(evt.timestamp).toLocaleTimeString()}</span>
-                  </div>
+              <div className="flex items-center gap-1 text-[11px]">
+                <Filter className="w-3 h-3 text-river" />
+                {["all", "critical", "high", "medium"].map((sev) => (
+                  <button
+                    key={sev}
+                    onClick={() => setFilterSeverity(sev)}
+                    className={`px-2 py-0.5 rounded-md uppercase text-[10px] font-semibold transition-colors ${
+                      filterSeverity === sev
+                        ? "bg-villa/15 text-villa border border-villa/30"
+                        : "text-river hover:text-siren"
+                    }`}
+                  >
+                    {sev}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Event List */}
+            <div className="flex-1 overflow-y-auto p-3 space-y-2 text-xs">
+              {filteredLogs.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-river gap-2">
+                  <Terminal className="w-6 h-6 text-river/60" />
+                  <p className="text-center text-xs text-river">Awaiting kernel events...</p>
                 </div>
-              ))
-            )}
+              ) : (
+                filteredLogs.map((evt: KernelEvent, idx: number) => (
+                  <div
+                    key={idx}
+                    className={`p-3 rounded-md border text-xs transition-colors ${
+                      evt.severity === "critical"
+                        ? "border-siren bg-villa/10 text-villa"
+                        : evt.severity === "high"
+                        ? "border-river bg-villa/5 text-villa"
+                        : "border-river/30 bg-ocean text-siren"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span
+                        className={`uppercase text-[10px] tracking-label font-semibold px-2 py-0.5 rounded-md ${
+                          evt.severity === "critical"
+                            ? "bg-siren/20 text-villa"
+                            : evt.severity === "high"
+                            ? "bg-river/30 text-villa"
+                            : "bg-river/20 text-siren"
+                        }`}
+                      >
+                        {evt.event_type}
+                      </span>
+                      <span className="text-[10px] text-river">PID {evt.pid}</span>
+                    </div>
+
+                    <div className="truncate text-villa/90 font-medium my-1" title={evt.filename}>
+                      {evt.filename}
+                    </div>
+
+                    <div className="text-[10px] text-river flex justify-between pt-1 border-t border-river/20">
+                      <span>comm: <strong className="text-villa/80">{evt.comm}</strong></span>
+                      <span>{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
