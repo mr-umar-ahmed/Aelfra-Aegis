@@ -114,6 +114,7 @@ def run_daemon_and_scan(temp_dir, file_type):
 def main():
     parser = argparse.ArgumentParser(description="Aegis Supply Chain Scanner")
     parser.add_argument("manifest", help="Path to package.json or requirements.txt")
+    parser.add_argument("--dry-run", action="store_true", help="Print what would be scanned without running the daemon or Docker")
     args = parser.parse_args()
     
     manifest_path = os.path.abspath(args.manifest)
@@ -121,6 +122,12 @@ def main():
     
     check_docker()
     pkg_count = parse_manifest(manifest_path)
+    
+    if args.dry_run:
+        print(f"[DRY RUN] Would scan {pkg_count} packages from {os.path.basename(manifest_path)}")
+        print(f"[DRY RUN] Would install in Docker (node:20 / python:3.11) and run daemon for 30s")
+        print(f"[DRY RUN] No Docker container started, no eBPF hooks attached")
+        sys.exit(0)
     
     with tempfile.TemporaryDirectory() as temp_dir:
         shutil.copy(manifest_path, os.path.join(temp_dir, file_name))

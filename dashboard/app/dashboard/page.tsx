@@ -40,6 +40,14 @@ export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const wsRef = useRef<WebSocket | null>(null);
+  const [clock, setClock] = useState("");
+
+  useEffect(() => {
+    const tick = () => setClock(new Date().toLocaleString());
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, []);
 
   const sendKillCommand = useCallback((pid: number) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
@@ -359,7 +367,12 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Top Bar Tabs (Center) */}
+          {/* Center: Clock */}
+          <div className="text-siren text-[11px] font-mono tracking-wider">
+            {clock}
+          </div>
+
+          {/* Top Bar Tabs */}
           <div className="flex bg-ocean border border-river/40 rounded-md p-1">
             <button 
               onClick={() => setActiveTab("graph")}
@@ -421,6 +434,11 @@ export default function DashboardPage() {
                         Connecting to eBPF Sensor...
                       </p>
                     </div>
+                  </div>
+                )}
+                {connectionStatus === "connected" && nodes.length === 0 && (
+                  <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+                    <p className="text-river/60 text-sm italic">Monitoring active — no events detected</p>
                   </div>
                 )}
                 <div className="flex-1 relative">
