@@ -1,0 +1,13 @@
+name: Aegis Supply Chain Scan
+on: [push, pull_request]
+jobs:
+  aegis-scan:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install BCC
+        run: sudo apt-get install -y bpfcc-tools python3-bpfcc
+      - name: Run Aegis Scan
+        run: sudo python3 cli/aegis-scan.py package.json
+        env:
+          ABUSEIPDB_KEY: ${{ secrets.ABUSEIPDB_KEY }}

@@ -1,0 +1,6 @@
+$ sudo python3 cli/aegis-scan.py package.json
+Scanning 23 packages from package.json...
+
+❌ AEGIS SCAN BLOCKED — 2 threats detected:
+   • lodsh: CRED_THEFT (confidence: 94%)
+   • xross-env: TYPOSQUATTER (edit distance: 1 from cross-env)

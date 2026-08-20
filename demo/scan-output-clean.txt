@@ -1,0 +1,4 @@
+$ sudo python3 cli/aegis-scan.py package.json
+Scanning 23 packages from package.json...
+
+✅ AEGIS SCAN COMPLETE — 0 threats detected (23 packages scanned)
