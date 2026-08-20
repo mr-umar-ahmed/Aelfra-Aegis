@@ -12,6 +12,7 @@ import json
 import os
 import signal
 import socket
+import sqlite3
 import struct
 import sys
 import threading
@@ -48,6 +49,97 @@ if os.path.exists(env_path):
             if line.strip() and not line.startswith("#"):
                 key, val = line.strip().split("=", 1)
                 os.environ[key] = val.strip(' "\'')
+
+# --- Module G: SQLite Setup ---
+DB_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data")
+os.makedirs(DB_DIR, exist_ok=True)
+DB_PATH = os.path.join(DB_DIR, "aegis.db")
+
+def init_db():
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute('''CREATE TABLE IF NOT EXISTS events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            pid INTEGER,
+            ppid INTEGER,
+            comm TEXT,
+            detail TEXT,
+            event_type TEXT,
+            attack_type TEXT,
+            risk_score INTEGER
+        )''')
+        conn.execute('''CREATE TABLE IF NOT EXISTS narrations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT NOT NULL,
+            pid INTEGER,
+            text TEXT,
+            attack_type TEXT
+        )''')
+        conn.execute('''CREATE TABLE IF NOT EXISTS incidents (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            start_time TEXT NOT NULL,
+            end_time TEXT NOT NULL,
+            pid INTEGER,
+            attack_type TEXT,
+            risk_score INTEGER,
+            status TEXT
+        )''')
+        conn.commit()
+
+init_db()
+
+def db_insert_event(event: dict):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            '''INSERT INTO events (timestamp, pid, ppid, comm, detail, event_type, attack_type, risk_score)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+            (
+                event.get("timestamp", ""),
+                event.get("pid"),
+                event.get("ppid"),
+                event.get("comm", ""),
+                event.get("filename", ""),
+                event.get("event_type", ""),
+                event.get("attack_type", "UNKNOWN"),
+                0
+            )
+        )
+
+def db_insert_narration(payload: dict):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            '''INSERT INTO narrations (timestamp, pid, text, attack_type)
+               VALUES (?, ?, ?, ?)''',
+            (payload["timestamp"], payload["pid"], payload["text"], payload["attack_type"])
+        )
+
+def db_insert_incident(pid: int, attack_type: str, events: list):
+    start_time = events[0]["timestamp"] if events else datetime.datetime.now(datetime.timezone.utc).isoformat()
+    end_time = events[-1]["timestamp"] if events else datetime.datetime.now(datetime.timezone.utc).isoformat()
+    risk_score = compute_risk_score().get("score", 0)
+    status = "active"
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.execute(
+            '''INSERT INTO incidents (start_time, end_time, pid, attack_type, risk_score, status)
+               VALUES (?, ?, ?, ?, ?, ?)''',
+            (start_time, end_time, pid, attack_type, risk_score, status)
+        )
+
+def get_recent_incidents(limit=50):
+    with sqlite3.connect(DB_PATH) as conn:
+        conn.row_factory = sqlite3.Row
+        cur = conn.execute("SELECT * FROM incidents ORDER BY id DESC LIMIT ?", (limit,))
+        incidents = [dict(row) for row in cur.fetchall()]
+        
+        for inc in incidents:
+            cur = conn.execute("SELECT text FROM narrations WHERE pid = ? ORDER BY id DESC LIMIT 1", (inc["pid"],))
+            narration_row = cur.fetchone()
+            inc["narration_text"] = narration_row["text"] if narration_row else None
+            
+            cur = conn.execute("SELECT * FROM events WHERE pid = ? ORDER BY id ASC", (inc["pid"],))
+            inc["events"] = [dict(r) for r in cur.fetchall()]
+            
+        return incidents
 
 class IPCache:
     def __init__(self, max_size=200):
@@ -231,6 +323,9 @@ async def check_chains():
                             *[client.send(message) for client in connected_clients],
                             return_exceptions=True
                         )
+                    
+                    db_insert_narration(payload)
+                    db_insert_incident(pid, attack_type, events)
         await asyncio.sleep(2)
 
 def determine_severity(event_type, filename):
@@ -322,6 +417,7 @@ def ring_buffer_callback(ctx, data, size):
         payload["data"]["dest_port"] = dest_port
     
     accumulate_event(payload["data"])
+    db_insert_event(payload["data"])
     
     print(f"[DAEMON EVENT] {json.dumps(payload['data'])}", flush=True)
 
@@ -388,6 +484,7 @@ async def mock_event_generator():
             payload["data"]["dest_port"] = item.get("dest_port")
 
         accumulate_event(payload["data"])
+        db_insert_event(payload["data"])
 
         print(f"[MOCK EVENT GENERATED] {json.dumps(payload['data'])}", flush=True)
         if event_queue:
@@ -460,10 +557,20 @@ async def ws_handler(websocket, path=None):
                         if os.name != 'nt':
                             os.kill(pid, signal.SIGKILL)
                         res = {"type": "kill_result", "pid": pid, "success": True, "message": f"PID {pid} killed successfully"}
+                        # Update DB status
+                        with sqlite3.connect(DB_PATH) as conn:
+                            conn.execute("UPDATE incidents SET status = 'terminated' WHERE pid = ?", (pid,))
                     except Exception as err:
                         print(f"[KILL SWITCH ERROR] {err}", file=sys.stderr, flush=True)
                         res = {"type": "kill_result", "pid": pid, "success": False, "message": str(err)}
                     await websocket.send(json.dumps(res))
+                elif data.get("action") == "get_history":
+                    limit = int(data.get("limit", 50))
+                    incidents = get_recent_incidents(limit)
+                    await websocket.send(json.dumps({
+                        "type": "history",
+                        "incidents": incidents
+                    }))
             except Exception as parse_err:
                 print(f"[WEBSOCKET PARSE ERROR] {parse_err}", file=sys.stderr, flush=True)
     except websockets.exceptions.ConnectionClosed:
@@ -500,6 +607,9 @@ async def main_async():
 
     async with websockets.serve(ws_handler, WS_HOST, WS_PORT):
         print(f"[DAEMON] WebSocket server active on ws://{WS_HOST}:{WS_PORT}", flush=True)
+        # Emit initial history to all connected clients is handled within ws_handler if they ask,
+        # but to push immediately on connect:
+        # Actually, let the client ask via get_history action to be clean.
         await asyncio.Future()
 
 def main():

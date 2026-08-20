@@ -5,7 +5,8 @@ import { useNodesState, useEdgesState } from "@xyflow/react";
 import { FlowGraph } from "@/components/flow-graph";
 import { ThreatPanel } from "@/components/threat-panel";
 import { RiskGauge } from "@/components/risk-gauge";
-import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage, NarrationMessage, RiskScoreData } from "@/lib/types";
+import { exportReportToHTML } from "@/lib/export";
+import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage, NarrationMessage, RiskScoreData, IncidentData } from "@/lib/types";
 import { autoLayoutNodes } from "@/lib/layout";
 import {
   Shield,
@@ -20,6 +21,7 @@ import {
   BarChart3,
   Network,
   Eye,
+  Download,
 } from "lucide-react";
 
 const WS_URL = "ws://localhost:8765";
@@ -31,6 +33,10 @@ export default function DashboardPage() {
   const [eventLogs, setEventLogs] = useState<KernelEvent[]>([]);
   const [narrations, setNarrations] = useState<NarrationMessage[]>([]);
   const [riskData, setRiskData] = useState<RiskScoreData | null>(null);
+  const [incidents, setIncidents] = useState<IncidentData[]>([]);
+  const [activeTab, setActiveTab] = useState<"graph" | "timeline">("graph");
+  const [timelineSearch, setTimelineSearch] = useState("");
+  const [expandedIncident, setExpandedIncident] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const wsRef = useRef<WebSocket | null>(null);
@@ -220,7 +226,10 @@ export default function DashboardPage() {
       ws = new WebSocket(WS_URL);
       wsRef.current = ws;
 
-      ws.onopen = () => setConnectionStatus("connected");
+      ws.onopen = () => {
+        setConnectionStatus("connected");
+        ws.send(JSON.stringify({ action: "get_history", limit: 50 }));
+      };
       ws.onclose = () => {
         setConnectionStatus("disconnected");
         setTimeout(connect, 3000);
@@ -238,6 +247,8 @@ export default function DashboardPage() {
             setNarrations((prev) => [payload, ...prev].slice(0, 5));
           } else if (payload.type === "risk_score") {
             setRiskData(payload.data);
+          } else if (payload.type === "history") {
+            setIncidents(payload.incidents);
           }
         } catch (e) {
           console.error("Failed to parse WS message", e);
@@ -348,8 +359,31 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Top Bar Tabs (Center) */}
+          <div className="flex bg-ocean border border-river/40 rounded-md p-1">
+            <button 
+              onClick={() => setActiveTab("graph")}
+              className={`px-4 py-1 rounded text-sm font-semibold transition-colors ${activeTab === "graph" ? "bg-villa text-ocean" : "text-siren hover:text-villa"}`}
+            >
+              GRAPH
+            </button>
+            <button 
+              onClick={() => setActiveTab("timeline")}
+              className={`px-4 py-1 rounded text-sm font-semibold transition-colors ${activeTab === "timeline" ? "bg-villa text-ocean" : "text-siren hover:text-villa"}`}
+            >
+              TIMELINE
+            </button>
+          </div>
+
           {/* Right: Status */}
           <div className="flex items-center gap-3">
+            <button 
+              onClick={() => exportReportToHTML(incidents)}
+              className="flex items-center gap-2 bg-siren hover:bg-villa text-ocean px-3 py-1.5 rounded-md text-xs font-bold transition-colors"
+            >
+              <Download className="w-3.5 h-3.5" />
+              EXPORT REPORT
+            </button>
             <span className="label text-siren">
               {eventLogs.length} events
             </span>
@@ -372,51 +406,114 @@ export default function DashboardPage() {
           </div>
         )}
 
-        {/* ─── Main Area: Graph + Event Sidebar ─── */}
+        {/* ─── Main Area: Graph/Timeline + Event Sidebar ─── */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Graph Panel */}
-          <div className="flex-1 flex flex-col min-w-0">
-            {/* Graph Card */}
-            <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden flex flex-col">
-              <div className="flex-1 relative">
-                <FlowGraph
-                  nodes={nodes}
-                  edges={edges}
-                  onNodesChange={onNodesChange}
-                  onEdgesChange={onEdgesChange}
-                />
+          {activeTab === "graph" ? (
+            <div className="flex-1 flex flex-col min-w-0">
+              {/* Graph Card */}
+              <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden flex flex-col">
+                <div className="flex-1 relative">
+                  <FlowGraph
+                    nodes={nodes}
+                    edges={edges}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                  />
+                </div>
+                <ThreatPanel narrations={narrations} />
               </div>
-              <ThreatPanel narrations={narrations} />
-            </div>
 
-            {/* Stats Strip — Metric Cards */}
-            <div className="mx-4 mb-4 grid grid-cols-6 gap-3">
-              <div className="bg-ocean rounded-md p-3 border border-river/30">
-                <p className="label text-siren mb-1">Total Processes</p>
-                <p className="heading text-2xl text-villa">{processCount}</p>
-              </div>
-              <div className="bg-ocean rounded-md p-3 border border-river/30">
-                <p className="label text-siren mb-1">Kernel Events</p>
-                <p className="heading text-2xl text-villa">{eventLogs.length}</p>
-              </div>
-              <div className="bg-ocean rounded-md p-3 border border-river/30">
-                <p className="label text-siren mb-1">Compromised</p>
-                <p className="heading text-2xl text-villa">{compromisedCount}</p>
-              </div>
-              <div className="bg-ocean rounded-md p-3 border border-river/30">
-                <p className="label text-siren mb-1">Terminated</p>
-                <p className="heading text-2xl text-villa">{terminatedCount}</p>
-              </div>
-              <div className="bg-ocean rounded-md p-3 border border-river/30">
-                <p className="label text-siren mb-1">Net Connections</p>
-                <p className="heading text-2xl text-villa">{networkConnections}</p>
-              </div>
-              <div className="bg-ocean rounded-md p-3 border border-river/30">
-                <p className="label text-siren mb-1">Threats Detected</p>
-                <p className="heading text-2xl text-villa">{threatsDetected}</p>
+              {/* Stats Strip — Metric Cards */}
+              <div className="mx-4 mb-4 grid grid-cols-6 gap-3">
+                <div className="bg-ocean rounded-md p-3 border border-river/30">
+                  <p className="label text-siren mb-1">Total Processes</p>
+                  <p className="heading text-2xl text-villa">{processCount}</p>
+                </div>
+                <div className="bg-ocean rounded-md p-3 border border-river/30">
+                  <p className="label text-siren mb-1">Kernel Events</p>
+                  <p className="heading text-2xl text-villa">{eventLogs.length}</p>
+                </div>
+                <div className="bg-ocean rounded-md p-3 border border-river/30">
+                  <p className="label text-siren mb-1">Compromised</p>
+                  <p className="heading text-2xl text-villa">{compromisedCount}</p>
+                </div>
+                <div className="bg-ocean rounded-md p-3 border border-river/30">
+                  <p className="label text-siren mb-1">Terminated</p>
+                  <p className="heading text-2xl text-villa">{terminatedCount}</p>
+                </div>
+                <div className="bg-ocean rounded-md p-3 border border-river/30">
+                  <p className="label text-siren mb-1">Net Connections</p>
+                  <p className="heading text-2xl text-villa">{networkConnections}</p>
+                </div>
+                <div className="bg-ocean rounded-md p-3 border border-river/30">
+                  <p className="label text-siren mb-1">Threats Detected</p>
+                  <p className="heading text-2xl text-villa">{threatsDetected}</p>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="flex-1 p-6 overflow-y-auto bg-[#fafafa]">
+              <div className="max-w-4xl mx-auto space-y-4">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-xl font-bold text-ocean">Incident Timeline</h2>
+                  <div className="relative w-64">
+                    <Search className="w-4 h-4 text-river absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Filter by Attack Type or PID..."
+                      value={timelineSearch}
+                      onChange={(e) => setTimelineSearch(e.target.value)}
+                      className="w-full bg-white border border-river/40 rounded-md pl-9 pr-3 py-2 text-sm text-ocean focus:outline-none focus:border-ocean transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {incidents.filter(inc => 
+                    inc.attack_type.toLowerCase().includes(timelineSearch.toLowerCase()) || 
+                    inc.pid.toString().includes(timelineSearch)
+                  ).map((inc) => (
+                    <div key={inc.id} className="bg-villa border border-river/40 rounded-md overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-shadow" onClick={() => setExpandedIncident(expandedIncident === inc.id ? null : inc.id)}>
+                      <div className="flex items-center p-4 border-l-4 border-l-ocean">
+                        <div className="flex-1 flex items-center gap-4">
+                          <span className="bg-ocean text-villa text-xs font-bold px-2 py-1 rounded uppercase">{inc.attack_type}</span>
+                          <span className="text-sm font-medium text-ocean">PID: {inc.pid}</span>
+                          <span className="text-xs text-river">{new Date(inc.start_time).toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <span className="text-sm font-bold text-ocean">Risk: {inc.risk_score}</span>
+                          <span className={`text-xs font-bold px-2 py-1 rounded ${inc.status === 'terminated' ? 'bg-siren text-ocean' : 'bg-red-100 text-red-800'}`}>{inc.status.toUpperCase()}</span>
+                        </div>
+                      </div>
+                      
+                      {expandedIncident === inc.id && (
+                        <div className="p-4 border-t border-river/20 bg-white">
+                          {inc.narration_text && (
+                            <div className="mb-4 p-3 bg-villa/50 border-l-2 border-siren text-sm text-ocean">
+                              <strong>Narrative:</strong> {inc.narration_text}
+                            </div>
+                          )}
+                          <div className="text-xs text-river font-semibold mb-2 uppercase">Raw Events ({inc.events?.length || 0})</div>
+                          <div className="max-h-48 overflow-y-auto space-y-1">
+                            {inc.events?.map((e, idx) => (
+                              <div key={idx} className="flex gap-4 text-xs font-mono p-1 hover:bg-villa/30 rounded">
+                                <span className="text-river w-20">{new Date(e.timestamp).toLocaleTimeString()}</span>
+                                <span className="text-ocean font-bold w-16">{e.event_type}</span>
+                                <span className="text-ocean flex-1 truncate">{e.filename || e.comm}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {incidents.length === 0 && (
+                    <div className="text-center py-10 text-river">No incidents recorded yet.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* ─── Event Stream Sidebar ─── */}
           <div className="w-80 bg-ocean border-l border-river/40 flex flex-col shrink-0">

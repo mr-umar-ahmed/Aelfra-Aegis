@@ -68,8 +68,21 @@ export interface RiskScoreMessage {
   data: RiskScoreData;
 }
 
+export interface IncidentData {
+  id: number;
+  start_time: string;
+  end_time: string;
+  pid: number;
+  attack_type: string;
+  risk_score: number;
+  status: string;
+  narration_text?: string;
+  events?: KernelEvent[];
+}
+
 export type WSMessage =
   | { type: "event"; data: KernelEvent }
   | { type: "kill_result"; pid: number; success: boolean; message: string }
   | NarrationMessage
-  | RiskScoreMessage;
+  | RiskScoreMessage
+  | { type: "history"; incidents: IncidentData[] };
