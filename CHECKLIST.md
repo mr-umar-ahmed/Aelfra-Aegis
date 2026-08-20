@@ -5,6 +5,19 @@ For each test: ✅ = working correctly, ❌ = broken (note what happened)
 
 ---
 
+## What You Must Provide Before Running Anything
+
+### 2. Groq API Key (free — no credit card)
+- Go to: https://console.groq.com
+- Sign up with your Google account
+- Click "API Keys" in the left sidebar
+- Click "Create API Key" → give it any name → copy the key
+- Paste into your .env file:  GROQ_API_KEY=your_key_here
+- Free tier: 14,400 requests/day, 30 requests/minute
+- For a demo session of 10 attacks: uses ~10 requests total
+
+---
+
 ## 🔧 SETUP TESTS
 
 - [ ] **T01 — Daemon starts without errors**
@@ -104,8 +117,8 @@ For each test: ✅ = working correctly, ❌ = broken (note what happened)
   - Expected: 3 sentences, technical but readable, not generic filler
 
 - [ ] **T22 — API failure degrades gracefully**
-  - Temporarily set `ANTHROPIC_API_KEY=invalid` in `.env`, restart daemon, run an attack
-  - Expected: Narration panel shows `"Failed to generate narration: ..."` — no crash
+  - Temporarily set `GROQ_API_KEY=invalid` in `.env`, restart daemon, run an attack
+  - Expected: Panel shows "Narration unavailable — Groq API call failed." — no crash
 
 - [ ] **T23 — Restore real API key after T22**
 
@@ -202,7 +215,7 @@ For each test: ✅ = working correctly, ❌ = broken (note what happened)
 
 - [ ] **T41 — .env.example is complete**
   - Command: `cat .env.example`
-  - Expected: Shows all 3 keys: `ANTHROPIC_API_KEY`, `ABUSEIPDB_KEY`, `WEBSOCKET_PORT`
+  - Expected: Shows all 3 keys: `GROQ_API_KEY`, `ABUSEIPDB_KEY`, `WEBSOCKET_PORT`
   - Expected: No real values — only placeholder text
 
 - [ ] **T42 — .gitignore is working**

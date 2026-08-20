@@ -256,36 +256,62 @@ def accumulate_event(event_payload: dict):
         pid_first_seen[pid] = now
     pid_events[pid].append(event_payload)
 
-async def narrate_attack(events: list) -> str:
-    url = "https://api.anthropic.com/v1/messages"
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-    headers = {
-        "x-api-key": api_key,
-        "anthropic-version": "2023-06-01",
-        "content-type": "application/json"
-    }
-    body = {
-        "model": "claude-sonnet-4-6",
-        "max_tokens": 300,
-        "system": "You are a threat intelligence analyst. You receive raw eBPF syscall events from a Linux system. Write a 3-sentence plain-English threat narrative: what happened, what the attacker was trying to do, and what known attack family this resembles. Be specific and technical. Do not use bullet points.",
+async def narrate_attack(events: list[dict]) -> str:
+    """
+    Calls Groq API (free) for threat narration.
+    Model: llama-3.1-70b-versatile
+    Endpoint: https://api.groq.com/openai/v1/chat/completions
+    """
+    import os, json
+    import urllib.request
+    
+    api_key = os.environ.get("GROQ_API_KEY", "")
+    if not api_key:
+        return "Narration unavailable — GROQ_API_KEY not set in .env"
+    
+    payload = {
+        "model": "llama-3.1-70b-versatile",
         "messages": [
-            {"role": "user", "content": json.dumps(events)}
-        ]
+            {
+                "role": "system",
+                "content": (
+                    "You are a threat intelligence analyst. "
+                    "You receive raw eBPF syscall events from a Linux system. "
+                    "Write exactly 3 sentences in plain English: "
+                    "what happened, what the attacker was trying to do, "
+                    "and what known attack family this resembles. "
+                    "Be specific and technical. No bullet points. No markdown."
+                )
+            },
+            {
+                "role": "user",
+                "content": json.dumps(events)
+            }
+        ],
+        "max_tokens": 300,
+        "temperature": 0.3
     }
     
-    def fetch():
-        if not api_key:
-            return "No ANTHROPIC_API_KEY set. Cannot narrate attack."
-        req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"), headers=headers, method="POST")
-        try:
-            with urllib.request.urlopen(req, timeout=10) as resp:
-                result = json.loads(resp.read().decode("utf-8"))
-                return result["content"][0]["text"]
-        except Exception as e:
-            print(f"[Narration Error] {e}", flush=True)
-            return f"Failed to generate narration: {str(e)}"
-            
-    return await asyncio.to_thread(fetch)
+    try:
+        req = urllib.request.Request(
+            "https://api.groq.com/openai/v1/chat/completions",
+            data=json.dumps(payload).encode(),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            },
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            data = json.loads(resp.read().decode())
+            return data["choices"][0]["message"]["content"].strip()
+    except urllib.error.HTTPError as e:
+        # Fallback logging to stdout if logging module not imported or configured, or use print
+        print(f"[Narration Error] Groq API error: {e.code} {e.reason}", flush=True)
+        return "Narration unavailable — Groq API call failed."
+    except Exception as e:
+        print(f"[Narration Error] Connection error: {e}", flush=True)
+        return "Narration unavailable — connection error."
 
 async def check_chains():
     """Runs periodically in the background to detect complete attack chains."""

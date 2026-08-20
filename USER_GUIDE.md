@@ -13,12 +13,12 @@
 git clone https://github.com/mr-umar-ahmed/Aelfra-Aegis.git
 cd Aelfra-Aegis
 cp .env.example .env
-nano .env   # Paste your ANTHROPIC_API_KEY and ABUSEIPDB_KEY
+nano .env   # Paste your GROQ_API_KEY (free — sign up at console.groq.com) and ABUSEIPDB_KEY
 ```
 
 Your `.env` must contain:
 ```
-ANTHROPIC_API_KEY=sk-ant-...
+GROQ_API_KEY=gsk_...
 ABUSEIPDB_KEY=...
 WEBSOCKET_PORT=8765
 ```
@@ -128,18 +128,18 @@ The daemon automatically checks every non-private outbound IP against `api.abuse
 
 ## Feature 4: AI Threat Narration
 
-After an attack chain closes (defined as: ≥1 file event **and** ≥1 exec event from the same PID within a 30-second window), the daemon sends the event list to the Anthropic Claude API.
+After an attack chain closes (defined as: ≥1 file event **and** ≥1 exec event from the same PID within a 30-second window), the daemon sends the event list to the Groq API (llama-3.1-70b-versatile).
 
 **Where it appears**: The **Threat Intelligence** panel, below the process graph.
 
 **How long to wait**: 30–45 seconds from the start of the attack (30s window + ~5s API call).
 
 **If it doesn't appear:**
-1. Check `ANTHROPIC_API_KEY` is set correctly in `.env`
+1. Check `GROQ_API_KEY` is set correctly in `.env`
 2. Confirm the attack triggered both a `file_open` AND an `exec_spawn` event from the same PID
 3. On Mock Mode, the mock sequence does include both event types — narration will still fire
 
-**API cost note**: Each narration call uses ~400 tokens (300 max output + ~100 input). At Claude Sonnet pricing, this is approximately $0.002 per narration.
+**API cost note**: Each narration call uses ~400 tokens (300 max output + ~100 input). On Groq's free tier, this costs nothing (14,400 free requests/day).
 
 ---
 
@@ -309,7 +309,7 @@ bash simulator/run-attack.sh cred-theft
 |---|---|---|
 | Status dot stays grey/CONNECTING | Daemon not running | Run `sudo python3 ebpf/daemon.py` |
 | No events in graph after attack | BCC/eBPF not loaded | Check you used `sudo`; verify Linux kernel ≥ 5.15 |
-| Narration never appears | API key invalid or 30s window not triggered | Check `ANTHROPIC_API_KEY` in `.env`; ensure attack has both file and exec events |
+| Narration never appears | API key invalid or 30s window not triggered | Check `GROQ_API_KEY` in `.env`; ensure attack has both file and exec events |
 | Docker: permission denied | Not in docker group | Run `sudo usermod -aG docker $USER` then log out/in |
 | `uname -r` shows 4.x kernel | Kernel too old for eBPF | Upgrade Ubuntu or use a VM |
 | Kill switch has no effect | Process already exited | Expected — daemon logs the error, no crash |
