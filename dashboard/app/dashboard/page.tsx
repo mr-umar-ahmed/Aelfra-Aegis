@@ -411,7 +411,18 @@ export default function DashboardPage() {
           {activeTab === "graph" ? (
             <div className="flex-1 flex flex-col min-w-0">
               {/* Graph Card */}
-              <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden flex flex-col">
+              <div className="flex-1 m-4 mb-2 bg-villa border border-river/40 rounded-md overflow-hidden flex flex-col relative">
+                {connectionStatus === "connecting" && (
+                  <div className="absolute inset-0 z-50 bg-ocean/95 flex flex-col items-center justify-center gap-4">
+                    <div className="w-80 h-32 rounded bg-ocean border border-river/40 relative overflow-hidden flex flex-col items-center justify-center gap-3">
+                      <div className="absolute inset-0 shimmer opacity-20" />
+                      <Shield className="w-8 h-8 text-siren animate-pulse" />
+                      <p className="text-villa text-[10px] uppercase tracking-wider font-semibold animate-pulse">
+                        Connecting to eBPF Sensor...
+                      </p>
+                    </div>
+                  </div>
+                )}
                 <div className="flex-1 relative">
                   <FlowGraph
                     nodes={nodes}
@@ -452,7 +463,7 @@ export default function DashboardPage() {
               </div>
             </div>
           ) : (
-            <div className="flex-1 p-6 overflow-y-auto bg-[#fafafa]">
+            <div className="flex-1 p-6 overflow-y-auto bg-villa/20">
               <div className="max-w-4xl mx-auto space-y-4">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-ocean">Incident Timeline</h2>

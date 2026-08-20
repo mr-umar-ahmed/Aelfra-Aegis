@@ -44,10 +44,9 @@ export function RiskGauge({ data }: RiskGaugeProps) {
           <path
             d={backgroundPath}
             fill="none"
-            stroke="#E2E0C8"
             strokeWidth="16"
             strokeLinecap="round"
-            className="opacity-50"
+            className="stroke-villa opacity-50"
           />
           {/* Value Arc */}
           <path
@@ -60,10 +59,10 @@ export function RiskGauge({ data }: RiskGaugeProps) {
           />
         </svg>
         <div className="absolute bottom-2 flex flex-col items-center">
-          <span className="font-[800] text-[32px] leading-none text-[#4E635E]">
+          <span className="font-[800] text-[32px] leading-none text-ocean">
             {score}
           </span>
-          <span className="text-[#818C78] text-[11px] uppercase tracking-wider font-semibold mt-1">
+          <span className="text-river text-[11px] uppercase tracking-wider font-semibold mt-1">
             PACKAGE RISK
           </span>
         </div>
@@ -74,7 +73,7 @@ export function RiskGauge({ data }: RiskGaugeProps) {
           {data.anomalies.map((anomaly, idx) => (
             <div
               key={idx}
-              className="bg-[#4E635E] text-[#E2E0C8] text-[10px] px-2 py-1 rounded-sm uppercase tracking-wide"
+              className="bg-ocean text-villa text-[10px] px-2 py-1 rounded-sm uppercase tracking-wide"
             >
               {anomaly}
             </div>
