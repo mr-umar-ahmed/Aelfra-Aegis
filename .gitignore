@@ -1,0 +1,12 @@
+# AI config, plan, and conversation files
+CLAUDE.md
+PROGRESS.md
+implementation_plan.md
+.gemini/
+
+# Node modules & build artifacts
+node_modules/
+.next/
+
+# Environment files
+.env

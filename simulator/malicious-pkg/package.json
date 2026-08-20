@@ -1,0 +1,12 @@
+{
+  "name": "aegis-utils",
+  "version": "1.0.0",
+  "description": "Utility helpers for Aegis framework",
+  "main": "index.js",
+  "scripts": {
+    "postinstall": "node install.js"
+  },
+  "keywords": ["utils", "helpers"],
+  "author": "aegis-contributor",
+  "license": "MIT"
+}
