@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNodesState, useEdgesState } from "@xyflow/react";
 import { FlowGraph } from "@/components/flow-graph";
-import type { KernelEvent, ProcessNode, EventEdge, WSMessage } from "@/lib/types";
+import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage } from "@/lib/types";
 import { autoLayoutNodes } from "@/lib/layout";
 import {
   Shield,
@@ -23,7 +23,7 @@ import {
 const WS_URL = "ws://localhost:8765";
 
 export default function DashboardPage() {
-  const [nodes, setNodes, onNodesChange] = useNodesState<ProcessNode>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<ProcessNode | NetworkNode>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState<EventEdge>([]);
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const [eventLogs, setEventLogs] = useState<KernelEvent[]>([]);
@@ -46,12 +46,12 @@ export default function DashboardPage() {
       const nodeId = `process-${event.pid}`;
       const parentNodeId = `process-${event.ppid}`;
 
-      setNodes((prevNodes: ProcessNode[]) => {
-        let updatedNodes: ProcessNode[] = [...prevNodes];
-        const existingNodeIndex = updatedNodes.findIndex((n: ProcessNode) => n.id === nodeId);
+      setNodes((prevNodes: (ProcessNode | NetworkNode)[]) => {
+        let updatedNodes: (ProcessNode | NetworkNode)[] = [...prevNodes];
+        const existingNodeIndex = updatedNodes.findIndex((n: any) => n.id === nodeId);
 
         if (existingNodeIndex >= 0) {
-          const targetNode = updatedNodes[existingNodeIndex];
+          const targetNode = updatedNodes[existingNodeIndex] as ProcessNode;
           const hasDotEnv = targetNode.data.hasDotEnvAccess || isDotEnv;
           updatedNodes[existingNodeIndex] = {
             ...targetNode,
@@ -83,11 +83,39 @@ export default function DashboardPage() {
           updatedNodes.push(newNode);
         }
 
+        if (event.event_type === "network") {
+          const networkNodeId = `network-${event.dest_ip}:${event.dest_port}`;
+          const existingNetworkNode = updatedNodes.findIndex((n: any) => n.id === networkNodeId);
+          if (existingNetworkNode >= 0) {
+            const netNode = updatedNodes[existingNetworkNode] as NetworkNode;
+            if (event.threat) {
+              updatedNodes[existingNetworkNode] = {
+                ...netNode,
+                data: { ...netNode.data, threat: true }
+              };
+            }
+          } else {
+            const newNetNode: NetworkNode = {
+              id: networkNodeId,
+              type: "networkNode",
+              position: { x: 0, y: 0 },
+              data: {
+                pid: event.pid,
+                comm: event.comm,
+                dest_ip: event.dest_ip || "unknown",
+                dest_port: event.dest_port || 0,
+                threat: event.threat || false,
+              },
+            };
+            updatedNodes.push(newNetNode);
+          }
+        }
+
         // Add parent node placeholder if absent
         if (event.ppid && event.ppid > 0) {
-          const parentExists = updatedNodes.some((n: ProcessNode) => n.id === parentNodeId);
+          const parentExists = updatedNodes.some((n: any) => n.id === parentNodeId);
           if (!parentExists) {
-            updatedNodes.push({
+            const newParentNode: ProcessNode = {
               id: parentNodeId,
               type: "processNode",
               position: { x: 0, y: 0 },
@@ -102,15 +130,37 @@ export default function DashboardPage() {
                 isKilled: false,
                 onKill: sendKillCommand,
               },
-            });
+            };
+            updatedNodes.push(newParentNode);
           }
         }
 
-        return autoLayoutNodes(updatedNodes, edges);
+        return autoLayoutNodes(updatedNodes as any, edges) as any;
       });
 
       // Add Edge
-      if (event.ppid && event.ppid > 0) {
+      if (event.event_type === "network") {
+        const edgeId = `edge-${event.pid}-${event.dest_ip}:${event.dest_port}`;
+        setEdges((prevEdges: EventEdge[]) => {
+          if (prevEdges.some((e: EventEdge) => e.id === edgeId)) return prevEdges;
+          return [
+            ...prevEdges,
+            {
+              id: edgeId,
+              source: nodeId,
+              target: `network-${event.dest_ip}:${event.dest_port}`,
+              label: "tcp_connect",
+              animated: true,
+              style: { stroke: "#818C78", strokeWidth: 2, strokeDasharray: "5,5" },
+              data: {
+                eventType: "network",
+                filename: `${event.dest_ip}:${event.dest_port}`,
+                timestamp: event.timestamp,
+              },
+            },
+          ];
+        });
+      } else if (event.ppid && event.ppid > 0) {
         const edgeId = `edge-${event.ppid}-${event.pid}-${event.event_type}`;
         const edgeLabel =
           event.event_type === "file_open"
@@ -146,9 +196,9 @@ export default function DashboardPage() {
   const handleKillResult = useCallback(
     (pid: number, success: boolean) => {
       if (success) {
-        setNodes((prevNodes: ProcessNode[]) =>
-          prevNodes.map((n: ProcessNode) =>
-            n.data.pid === pid
+        setNodes((prevNodes: (ProcessNode | NetworkNode)[]) =>
+          prevNodes.map((n: any) =>
+            n.type === "processNode" && n.data.pid === pid
               ? { ...n, data: { ...n.data, isKilled: true } }
               : n
           )
@@ -194,8 +244,11 @@ export default function DashboardPage() {
     };
   }, [handleIncomingEvent, handleKillResult]);
 
-  const compromisedCount = nodes.filter((n: ProcessNode) => n.data.hasDotEnvAccess).length;
-  const terminatedCount = nodes.filter((n: ProcessNode) => n.data.isKilled).length;
+  const compromisedCount = nodes.filter((n: any) => n.type === "processNode" && n.data.hasDotEnvAccess).length;
+  const terminatedCount = nodes.filter((n: any) => n.type === "processNode" && n.data.isKilled).length;
+  const processCount = nodes.filter((n: any) => n.type === "processNode").length;
+  const networkConnections = nodes.filter((n: any) => n.type === "networkNode").length;
+  const threatsDetected = nodes.filter((n: any) => n.type === "networkNode" && n.data.threat).length;
 
   const filteredLogs = eventLogs.filter((evt: KernelEvent) => {
     const matchesSearch =
@@ -266,7 +319,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 text-villa text-xs">
               <Activity className="w-3.5 h-3.5 text-siren" />
               <span className="label text-siren">Processes</span>
-              <span className="heading text-base text-villa">{nodes.length}</span>
+              <span className="heading text-base text-villa">{processCount}</span>
             </div>
             <div className="w-px h-5 bg-river/40" />
             <div className="flex items-center gap-2 text-villa text-xs">
@@ -320,11 +373,11 @@ export default function DashboardPage() {
               />
             </div>
 
-            {/* Stats Strip — 4 Metric Cards */}
-            <div className="mx-4 mb-4 grid grid-cols-4 gap-3">
+            {/* Stats Strip — Metric Cards */}
+            <div className="mx-4 mb-4 grid grid-cols-6 gap-3">
               <div className="bg-ocean rounded-md p-3 border border-river/30">
                 <p className="label text-siren mb-1">Total Processes</p>
-                <p className="heading text-2xl text-villa">{nodes.length}</p>
+                <p className="heading text-2xl text-villa">{processCount}</p>
               </div>
               <div className="bg-ocean rounded-md p-3 border border-river/30">
                 <p className="label text-siren mb-1">Kernel Events</p>
@@ -337,6 +390,14 @@ export default function DashboardPage() {
               <div className="bg-ocean rounded-md p-3 border border-river/30">
                 <p className="label text-siren mb-1">Terminated</p>
                 <p className="heading text-2xl text-villa">{terminatedCount}</p>
+              </div>
+              <div className="bg-ocean rounded-md p-3 border border-river/30">
+                <p className="label text-siren mb-1">Net Connections</p>
+                <p className="heading text-2xl text-villa">{networkConnections}</p>
+              </div>
+              <div className="bg-ocean rounded-md p-3 border border-river/30">
+                <p className="label text-siren mb-1">Threats Detected</p>
+                <p className="heading text-2xl text-villa">{threatsDetected}</p>
               </div>
             </div>
           </div>

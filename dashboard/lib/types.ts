@@ -6,11 +6,24 @@ export interface KernelEvent {
   ppid: number;
   uid: number;
   comm: string;
-  event_type: "file_open" | "exec_spawn" | "net_connect";
+  event_type: "file_open" | "exec_spawn" | "net_connect" | "network";
   filename: string;
   severity: "critical" | "high" | "medium" | "low";
   attack_type?: string;
+  dest_ip?: string;
+  dest_port?: number;
+  threat?: boolean;
 }
+
+export interface NetworkNodeData extends Record<string, unknown> {
+  pid: number;
+  comm: string;
+  dest_ip: string;
+  dest_port: number;
+  threat: boolean;
+}
+
+export type NetworkNode = Node<NetworkNodeData, "networkNode">;
 
 export interface ProcessNodeData extends Record<string, unknown> {
   pid: number;

@@ -11,17 +11,18 @@ import {
   BackgroundVariant,
 } from "@xyflow/react";
 import { ProcessNode as ProcessNodeComponent } from "./process-node";
-import type { ProcessNode, EventEdge } from "@/lib/types";
+import { NetworkNodeComponent } from "./network-node";
+import type { ProcessNode, NetworkNode, EventEdge } from "@/lib/types";
 
 interface FlowGraphProps {
-  nodes: ProcessNode[];
+  nodes: (ProcessNode | NetworkNode)[];
   edges: EventEdge[];
-  onNodesChange?: OnNodesChange<ProcessNode>;
+  onNodesChange?: OnNodesChange<ProcessNode | NetworkNode>;
   onEdgesChange?: OnEdgesChange<EventEdge>;
 }
 
 export function FlowGraph({ nodes, edges, onNodesChange, onEdgesChange }: FlowGraphProps) {
-  const nodeTypes = useMemo(() => ({ processNode: ProcessNodeComponent }), []);
+  const nodeTypes = useMemo(() => ({ processNode: ProcessNodeComponent, networkNode: NetworkNodeComponent }), []);
 
   return (
     <div className="w-full h-full relative">

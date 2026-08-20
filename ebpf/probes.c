@@ -1,5 +1,6 @@
 #include <uapi/linux/ptrace.h>
 #include <linux/sched.h>
+#include <net/sock.h>
 
 struct event_t {
     u32 pid;
@@ -9,6 +10,8 @@ struct event_t {
     char comm[16];
     char event_type[16];
     char filename[256];
+    u32 dest_ip;
+    u16 dest_port;
 };
 
 BPF_RINGBUF_OUTPUT(events, 8);
@@ -80,7 +83,7 @@ TRACEPOINT_PROBE(syscalls, sys_enter_execve) {
     return 0;
 }
 
-TRACEPOINT_PROBE(syscalls, sys_enter_connect) {
+int trace_tcp_connect(struct pt_regs *ctx, struct sock *sk) {
     u64 pid_tgid = bpf_get_current_pid_tgid();
     u32 pid = pid_tgid >> 32;
     u32 uid = bpf_get_current_uid_gid();
@@ -96,8 +99,11 @@ TRACEPOINT_PROBE(syscalls, sys_enter_connect) {
     struct task_struct *task = (struct task_struct *)bpf_get_current_task();
     event->ppid = task->real_parent->tgid;
 
-    __builtin_memcpy(event->event_type, "net_connect", 12);
-    __builtin_memcpy(event->filename, "http://localhost:9999/exfil", 28);
+    __builtin_memcpy(event->event_type, "network", 8);
+    __builtin_memcpy(event->filename, "", 1);
+
+    bpf_probe_read_kernel(&event->dest_ip, sizeof(event->dest_ip), &sk->__sk_common.skc_daddr);
+    bpf_probe_read_kernel(&event->dest_port, sizeof(event->dest_port), &sk->__sk_common.skc_dport);
 
     events.ringbuf_submit(event, 0);
 

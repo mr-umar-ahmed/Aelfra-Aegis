@@ -11,9 +11,14 @@ import datetime
 import json
 import os
 import signal
+import socket
+import struct
 import sys
 import threading
 import time
+import urllib.request
+import urllib.parse
+from collections import deque
 
 try:
     from bcc import BPF
@@ -35,10 +40,44 @@ event_queue = None
 main_loop = None
 b = None
 
+# Load .env file
+env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
+if os.path.exists(env_path):
+    with open(env_path) as f:
+        for line in f:
+            if line.strip() and not line.startswith("#"):
+                key, val = line.strip().split("=", 1)
+                os.environ[key] = val.strip(' "\'')
+
+class IPCache:
+    def __init__(self, max_size=200):
+        self.cache = {}
+        self.order = deque()
+        self.max_size = max_size
+        
+    def get(self, ip: str):
+        return self.cache.get(ip)
+        
+    def put(self, ip: str, result: dict):
+        if ip in self.cache:
+            return
+        if len(self.cache) >= self.max_size:
+            oldest = self.order.popleft()
+            del self.cache[oldest]
+        self.cache[ip] = result
+        self.order.append(ip)
+
+    def should_check(self, ip: str) -> bool:
+        if ip.startswith(("127.", "10.", "192.168.", "::1", "0.0.0.0")):
+            return False
+        return ip not in self.cache
+
+ip_cache = IPCache()
+
 def determine_severity(event_type, filename):
     if event_type == "file_open" and ".env" in filename:
         return "critical"
-    if event_type == "net_connect":
+    if event_type == "network":
         return "high"
     if event_type == "exec_spawn":
         return "medium"
@@ -68,7 +107,7 @@ def classify_attack(event_type, filename, comm):
         return "REVERSE_SHELL"
     if event_type == "exec_spawn" and comm == "node" and "bash" in filename:
         return "REVERSE_SHELL"
-    if event_type == "net_connect" and "pool" in filename:
+    if event_type == "network" and ("pool" in filename or dest_port == 4444):
         return "CRYPTOMINER"
     
     # Very basic typosquatter simulation (normally we'd compare against top 100 packages)
@@ -88,8 +127,20 @@ def ring_buffer_callback(ctx, data, size):
     event_type = event.event_type.decode('utf-8', errors='replace').strip('\x00')
     filename = event.filename.decode('utf-8', errors='replace').strip('\x00')
     
+    dest_ip = ""
+    dest_port = 0
+    if event_type == "network":
+        try:
+            dest_ip = socket.inet_ntoa(struct.pack("!I", event.dest_ip))
+            dest_port = socket.ntohs(event.dest_port)
+        except Exception:
+            pass
+
     severity = determine_severity(event_type, filename)
-    attack_type = classify_attack(event_type, filename, comm)
+    attack_type = classify_attack(event_type, filename, comm) # dest_port handled manually below if needed
+    if event_type == "network" and dest_port == 4444:
+        attack_type = "CRYPTOMINER"
+
     timestamp = datetime.datetime.now(datetime.timezone.utc).isoformat()
     
     payload = {
@@ -106,6 +157,10 @@ def ring_buffer_callback(ctx, data, size):
             "attack_type": attack_type
         }
     }
+    
+    if event_type == "network":
+        payload["data"]["dest_ip"] = dest_ip
+        payload["data"]["dest_port"] = dest_port
     
     print(f"[DAEMON EVENT] {json.dumps(payload['data'])}", flush=True)
 
@@ -141,7 +196,7 @@ async def mock_event_generator():
         },
         {
             "pid": 5820, "ppid": 4100, "uid": 1000, "comm": "node",
-            "event_type": "net_connect", "filename": "http://localhost:9999/exfil", "severity": "high"
+            "event_type": "network", "filename": "", "dest_ip": "45.14.224.197", "dest_port": 4444, "severity": "high"
         },
         {
             "pid": 8940, "ppid": 5820, "uid": 1000, "comm": "bash",
@@ -162,14 +217,48 @@ async def mock_event_generator():
                 "uid": item["uid"],
                 "comm": item["comm"],
                 "event_type": item["event_type"],
-                "filename": item["filename"],
+                "filename": item.get("filename", ""),
                 "severity": item["severity"],
                 "attack_type": attack_type
             }
         }
+        if item["event_type"] == "network":
+            payload["data"]["dest_ip"] = item.get("dest_ip")
+            payload["data"]["dest_port"] = item.get("dest_port")
+
         print(f"[MOCK EVENT GENERATED] {json.dumps(payload['data'])}", flush=True)
         if event_queue:
             await event_queue.put(payload)
+
+async def check_abuseipdb(ip):
+    if not ip_cache.should_check(ip):
+        cached = ip_cache.get(ip)
+        return cached.get("is_threat", False) if cached else False
+    
+    api_key = os.environ.get("ABUSEIPDB_KEY")
+    if not api_key:
+        return False
+        
+    url = f"https://api.abuseipdb.com/api/v2/check?ipAddress={ip}"
+    headers = {
+        'Accept': 'application/json',
+        'Key': api_key
+    }
+    
+    def fetch():
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=2) as resp:
+                data = json.loads(resp.read().decode())
+                score = data.get("data", {}).get("abuseConfidenceScore", 0)
+                is_threat = score > 25
+                ip_cache.put(ip, {"is_threat": is_threat})
+                return is_threat
+        except Exception as e:
+            print(f"[AbuseIPDB Error] {e}", flush=True)
+            return False
+            
+    return await asyncio.to_thread(fetch)
 
 async def broadcast_worker():
     while True:
@@ -177,6 +266,15 @@ async def broadcast_worker():
             await asyncio.sleep(0.1)
             continue
         payload = await event_queue.get()
+
+        if payload["data"]["event_type"] == "network":
+            ip = payload["data"].get("dest_ip")
+            if ip:
+                is_threat = await check_abuseipdb(ip)
+                if is_threat:
+                    payload["data"]["threat"] = True
+                    payload["data"]["severity"] = "critical"
+
         if connected_clients:
             message = json.dumps(payload)
             await asyncio.gather(
@@ -225,6 +323,7 @@ async def main_async():
                 bpf_code = f.read()
             print("[DAEMON] Compiling eBPF probes...", flush=True)
             b = BPF(text=bpf_code)
+            b.attach_kprobe(event="tcp_connect", fn_name="trace_tcp_connect")
             print("[DAEMON] eBPF probes loaded successfully.", flush=True)
             
             t = threading.Thread(target=bcc_polling_thread, daemon=True)
