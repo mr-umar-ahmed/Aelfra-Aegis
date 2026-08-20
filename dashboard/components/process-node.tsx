@@ -1,11 +1,29 @@
-"use client";
-
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import type { ProcessNode } from "@/lib/types";
 import { ShieldAlert, Terminal, Activity, Skull, CheckCircle2, Cpu, Wifi } from "lucide-react";
 
 export function ProcessNode({ data }: NodeProps<ProcessNode>) {
+  const pidStr = data.pid.toString();
+  const [killConfirmState, setKillConfirmState] = useState<Record<string, 'idle' | 'armed' | 'sent'>>({
+    [pidStr]: 'idle'
+  });
+  const [countdown, setCountdown] = useState(5);
+
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  const clearTimers = () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+  };
+
+  useEffect(() => {
+    return () => clearTimers();
+  }, []);
+
+  const currentState = killConfirmState[pidStr] || 'idle';
+
   const getStyleClasses = () => {
     if (data.isKilled) {
       return "border-river bg-river/30 opacity-50 grayscale";
@@ -96,13 +114,60 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
               <CheckCircle2 className="w-4 h-4 text-siren" />
               <span>TERMINATED</span>
             </div>
+          ) : currentState === "sent" ? (
+            <div className="text-center text-xs italic text-river font-semibold py-2">
+              SIGKILL sent
+            </div>
+          ) : currentState === "armed" ? (
+            <div className="flex flex-col gap-1.5 transition-all duration-200">
+              <div className="flex gap-2">
+                <button
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.stopPropagation();
+                    clearTimers();
+                    setKillConfirmState({ [pidStr]: 'sent' });
+                    data.onKill(data.pid);
+                    timeoutRef.current = setTimeout(() => {
+                      setKillConfirmState({ [pidStr]: 'idle' });
+                    }, 3000);
+                  }}
+                  className="flex-1 flex items-center justify-center text-[10px] font-bold bg-ocean text-villa py-1 px-2 rounded border border-river/30 hover:bg-river/30 cursor-pointer transition-colors"
+                >
+                  Confirm Kill
+                </button>
+                <button
+                  onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                    e.stopPropagation();
+                    clearTimers();
+                    setKillConfirmState({ [pidStr]: 'idle' });
+                  }}
+                  className="flex-1 flex items-center justify-center text-[10px] font-bold bg-siren text-ocean py-1 px-2 rounded border border-river/40 hover:bg-river/30 cursor-pointer transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className="text-[10px] text-river text-center font-medium">
+                Auto-cancel in {countdown}s...
+              </div>
+            </div>
           ) : (
             <button
               onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                 e.stopPropagation();
-                data.onKill(data.pid);
+                clearTimers();
+                setCountdown(5);
+                setKillConfirmState({ [pidStr]: 'armed' });
+                
+                intervalRef.current = setInterval(() => {
+                  setCountdown((prev) => Math.max(prev - 1, 0));
+                }, 1000);
+
+                timeoutRef.current = setTimeout(() => {
+                  clearTimers();
+                  setKillConfirmState({ [pidStr]: 'idle' });
+                }, 5000);
               }}
-              className="w-full flex items-center justify-center gap-2 text-xs font-bold bg-ocean hover:bg-river/50 active:scale-95 text-villa py-2 px-3 rounded-md transition-all duration-200 border border-siren/60 hover:border-siren cursor-pointer"
+              className="w-full flex items-center justify-center gap-2 text-xs font-semibold bg-ocean hover:bg-river/30 text-villa py-1.5 px-2.5 rounded-md border border-river cursor-pointer transition-colors"
             >
               <Skull className="w-4 h-4" />
               <span>KILL [{data.pid}]</span>
