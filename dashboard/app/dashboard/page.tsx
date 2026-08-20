@@ -4,7 +4,8 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useNodesState, useEdgesState } from "@xyflow/react";
 import { FlowGraph } from "@/components/flow-graph";
 import { ThreatPanel } from "@/components/threat-panel";
-import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage, NarrationMessage } from "@/lib/types";
+import { RiskGauge } from "@/components/risk-gauge";
+import type { KernelEvent, ProcessNode, NetworkNode, EventEdge, WSMessage, NarrationMessage, RiskScoreData } from "@/lib/types";
 import { autoLayoutNodes } from "@/lib/layout";
 import {
   Shield,
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected">("connecting");
   const [eventLogs, setEventLogs] = useState<KernelEvent[]>([]);
   const [narrations, setNarrations] = useState<NarrationMessage[]>([]);
+  const [riskData, setRiskData] = useState<RiskScoreData | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterSeverity, setFilterSeverity] = useState<string>("all");
   const wsRef = useRef<WebSocket | null>(null);
@@ -234,6 +236,8 @@ export default function DashboardPage() {
             handleKillResult(payload.pid, payload.success);
           } else if (payload.type === "narration") {
             setNarrations((prev) => [payload, ...prev].slice(0, 5));
+          } else if (payload.type === "risk_score") {
+            setRiskData(payload.data);
           }
         } catch (e) {
           console.error("Failed to parse WS message", e);
@@ -300,6 +304,11 @@ export default function DashboardPage() {
             <span>Network Map</span>
           </a>
         </nav>
+
+        {/* Risk Score Gauge */}
+        <div className="pb-6">
+          <RiskGauge data={riskData} />
+        </div>
 
         {/* Sidebar Footer — System Info */}
         <div className="px-4 py-3 border-t border-river/30 text-[10px] text-siren space-y-1">

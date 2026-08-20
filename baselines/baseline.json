@@ -1,0 +1,52 @@
+{
+  "lodash": {
+    "avg_file_opens": 5,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "express": {
+    "avg_file_opens": 8,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "axios": {
+    "avg_file_opens": 6,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "chalk": {
+    "avg_file_opens": 4,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "dotenv": {
+    "avg_file_opens": 3,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "uuid": {
+    "avg_file_opens": 4,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "cors": {
+    "avg_file_opens": 3,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "helmet": {
+    "avg_file_opens": 5,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "morgan": {
+    "avg_file_opens": 6,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  },
+  "moment": {
+    "avg_file_opens": 7,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+  }
+}

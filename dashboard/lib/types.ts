@@ -55,7 +55,21 @@ export interface NarrationMessage {
   attack_type: string;
 }
 
+export interface RiskScoreData {
+  score: number;
+  file_opens: number;
+  processes_spawned: number;
+  network_connections: number;
+  anomalies: string[];
+}
+
+export interface RiskScoreMessage {
+  type: "risk_score";
+  data: RiskScoreData;
+}
+
 export type WSMessage =
   | { type: "event"; data: KernelEvent }
   | { type: "kill_result"; pid: number; success: boolean; message: string }
-  | NarrationMessage;
+  | NarrationMessage
+  | RiskScoreMessage;

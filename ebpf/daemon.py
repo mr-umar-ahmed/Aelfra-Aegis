@@ -74,12 +74,89 @@ class IPCache:
 
 ip_cache = IPCache()
 
+# --- Module C: Baseline & Risk Score ---
+baseline_data = {}
+baseline_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "baselines", "baseline.json")
+if os.path.exists(baseline_path):
+    try:
+        with open(baseline_path, "r") as f:
+            baseline_data = json.load(f)
+    except Exception as e:
+        print(f"[ERROR] Failed to load baseline.json: {e}")
+
+baseline_medians = {
+    "avg_file_opens": 5,
+    "avg_processes_spawned": 0,
+    "avg_network_connections": 0
+}
+if baseline_data:
+    file_opens = sorted([d.get("avg_file_opens", 0) for d in baseline_data.values()])
+    procs = sorted([d.get("avg_processes_spawned", 0) for d in baseline_data.values()])
+    nets = sorted([d.get("avg_network_connections", 0) for d in baseline_data.values()])
+    
+    if file_opens: baseline_medians["avg_file_opens"] = file_opens[len(file_opens)//2]
+    if procs: baseline_medians["avg_processes_spawned"] = procs[len(procs)//2]
+    if nets: baseline_medians["avg_network_connections"] = nets[len(nets)//2]
+
+all_events_history = []
+
+def compute_risk_score() -> dict:
+    f_opens = sum(1 for e in all_events_history if e["event_type"] == "file_open")
+    p_spawn = sum(1 for e in all_events_history if e["event_type"] == "exec_spawn")
+    n_conn = sum(1 for e in all_events_history if e["event_type"] == "network")
+    
+    score = 0
+    anomalies = []
+    
+    m_file = baseline_medians["avg_file_opens"]
+    if f_opens > 2 * m_file:
+        score += 30
+        anomalies.append(f"file_opens ({f_opens}) > 2x baseline median ({m_file})")
+        
+    m_proc = baseline_medians["avg_processes_spawned"]
+    if p_spawn > m_proc:
+        score += 40
+        anomalies.append(f"processes_spawned ({p_spawn}) > baseline median ({m_proc})")
+        
+    m_net = baseline_medians["avg_network_connections"]
+    if n_conn > m_net:
+        score += 30
+        anomalies.append(f"network_connections ({n_conn}) > baseline median ({m_net})")
+        
+    if score > 100: score = 100
+    
+    return {
+        "score": score,
+        "file_opens": f_opens,
+        "processes_spawned": p_spawn,
+        "network_connections": n_conn,
+        "anomalies": anomalies
+    }
+
+async def emit_risk_score_loop():
+    while True:
+        await asyncio.sleep(3)
+        if not all_events_history:
+            continue
+        risk_data = compute_risk_score()
+        payload = {
+            "type": "risk_score",
+            "data": risk_data
+        }
+        if connected_clients:
+            message = json.dumps(payload)
+            await asyncio.gather(
+                *[client.send(message) for client in connected_clients],
+                return_exceptions=True
+            )
+
 # --- Module E: Narration State ---
 pid_events: dict = {}       # pid -> list of events
 pid_first_seen: dict = {}   # pid -> timestamp of first event
 narrated_pids: set = set()  # pids already narrated
 
 def accumulate_event(event_payload: dict):
+    all_events_history.append(event_payload)
     pid = event_payload["pid"]
     now = time.time()
     if pid not in pid_events:
@@ -419,6 +496,7 @@ async def main_async():
 
     asyncio.create_task(broadcast_worker())
     asyncio.create_task(check_chains())
+    asyncio.create_task(emit_risk_score_loop())
 
     async with websockets.serve(ws_handler, WS_HOST, WS_PORT):
         print(f"[DAEMON] WebSocket server active on ws://{WS_HOST}:{WS_PORT}", flush=True)
