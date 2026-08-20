@@ -1,0 +1,8 @@
+{
+  "name": "aegis-root",
+  "version": "1.0.0",
+  "description": "Root workspace clean manifest for Aegis scanning validation",
+  "dependencies": {
+    "lodash": "^4.17.21"
+  }
+}
