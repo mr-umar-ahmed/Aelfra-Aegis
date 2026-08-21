@@ -57,9 +57,9 @@ export interface NarrationMessage {
 
 export interface RiskScoreData {
   score: number;
-  file_opens: number;
-  processes_spawned: number;
-  network_connections: number;
+  file_opens?: number;
+  processes_spawned?: number;
+  network_connections?: number;
   anomalies: string[];
 }
 

@@ -49,6 +49,9 @@ export default function DashboardPage() {
   const [narrations, setNarrations] = useState<NarrationMessage[]>([]);
   const [riskData, setRiskData] = useState<RiskScoreData | null>({
     score: 0,
+    file_opens: 0,
+    processes_spawned: 0,
+    network_connections: 0,
     anomalies: ["Monitoring active"],
   });
   const [incidents, setIncidents] = useState<IncidentData[]>([]);
