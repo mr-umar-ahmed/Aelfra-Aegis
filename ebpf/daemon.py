@@ -22,7 +22,7 @@ import urllib.parse
 from collections import deque
 
 try:
-    from bcc import BPF
+    from bcc import BPF  # type: ignore
 except ImportError:
     BPF = None
 
@@ -270,7 +270,7 @@ async def narrate_attack(events: list[dict]) -> str:
         return "Narration unavailable — GROQ_API_KEY not set in .env"
     
     payload = {
-        "model": "llama-3.1-70b-versatile",
+        "model": "openai/gpt-oss-20b",
         "messages": [
             {
                 "role": "system",
@@ -298,7 +298,8 @@ async def narrate_attack(events: list[dict]) -> str:
             data=json.dumps(payload).encode(),
             headers={
                 "Authorization": f"Bearer {api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
             },
             method="POST"
         )
@@ -387,7 +388,7 @@ def classify_attack(event_type, filename, comm):
         return "REVERSE_SHELL"
     if event_type == "exec_spawn" and comm == "node" and "bash" in filename:
         return "REVERSE_SHELL"
-    if event_type == "network" and ("pool" in filename or dest_port == 4444):
+    if event_type == "network" and "pool" in filename:
         return "CRYPTOMINER"
     
     # Very basic typosquatter simulation (normally we'd compare against top 100 packages)

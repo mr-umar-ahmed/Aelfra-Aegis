@@ -9,17 +9,24 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ocean: "#4E635E",
-        villa: "#E2E0C8",
-        siren: "#A6B49E",
-        river: "#818C78",
+        ocean: "#090d16",
+        "ocean-card": "#111827",
+        villa: "#f8fafc",
+        siren: "#ef4444",
+        river: "#1e293b",
+        "river-light": "#334155",
+        cyan: {
+          400: "#38bdf8",
+          500: "#06b6d4",
+        },
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
+        mono: ["Fira Code", "JetBrains Mono", "monospace"],
       },
       letterSpacing: {
-        heading: "-0.03em",
-        label: "0.08em",
+        heading: "-0.02em",
+        label: "0.05em",
       },
     },
   },
