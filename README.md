@@ -12,6 +12,9 @@
 [![Aegis Security Gate](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions/workflows/aegis-scan.yml/badge.svg)](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions/workflows/aegis-scan.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language](https://img.shields.io/badge/language-C%20%7C%20Python%20%7C%20Next.js-blue.svg)](#tech-stack)
+[![Documentation](https://img.shields.io/badge/Docs-AEGIS__MASTER__GUIDE.md-emerald.svg)](AEGIS_MASTER_GUIDE.md)
+
+> 📖 **Comprehensive System Blueprint**: For the complete all-in-one technical manual covering the problem statement, technology stack, competitive comparisons, architecture diagrams, all 11+ features, and enterprise deployment guides, read [**`AEGIS_MASTER_GUIDE.md`**](AEGIS_MASTER_GUIDE.md).
 
 ---
 
