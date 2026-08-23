@@ -9,24 +9,30 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        ocean: "#090d16",
-        "ocean-card": "#111827",
-        villa: "#f8fafc",
+        ocean: "#09090b",
+        "ocean-card": "#121215",
+        villa: "#ffffff",
         siren: "#ef4444",
-        river: "#1e293b",
-        "river-light": "#334155",
+        river: "#27272a",
+        "river-light": "#3f3f46",
         cyan: {
           400: "#38bdf8",
           500: "#06b6d4",
         },
+        orange: {
+          500: "#ff6b00",
+          600: "#ea580c",
+        },
       },
       fontFamily: {
+        cyber: ["Orbitron", "sans-serif"],
+        tech: ["Chakra Petch", "sans-serif"],
         sans: ["Inter", "system-ui", "sans-serif"],
-        mono: ["Fira Code", "JetBrains Mono", "monospace"],
+        mono: ["JetBrains Mono", "Fira Code", "monospace"],
       },
       letterSpacing: {
-        heading: "-0.02em",
-        label: "0.05em",
+        heading: "-0.03em",
+        label: "0.08em",
       },
     },
   },
