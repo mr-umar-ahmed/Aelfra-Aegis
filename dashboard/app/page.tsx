@@ -2,30 +2,24 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  Shield,
-  ArrowRight,
-  ArrowLeft,
   Search,
-  Terminal,
-  Zap,
-  Flame,
-  User,
-  CheckCircle2,
-  AlertTriangle,
-  Play,
-  Cpu,
-  Layers,
+  Sun,
+  ChevronLeft,
   ChevronRight,
+  ShieldAlert,
+  Zap,
+  Terminal,
+  Cpu,
+  CheckCircle2,
 } from "lucide-react";
 
 export default function OnboardingLanding() {
   const router = useRouter();
   const [slide, setSlide] = useState(0);
   const [agentName, setAgentName] = useState("");
-  const [savedCallsign, setSavedCallsign] = useState("Agent Umar");
+  const [savedCallsign, setSavedCallsign] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("aegis_agent_name");
@@ -35,12 +29,21 @@ export default function OnboardingLanding() {
     }
   }, []);
 
-  const handleSaveName = (e: React.FormEvent) => {
+  const handleSaveNameAndProceed = (e: React.FormEvent) => {
     e.preventDefault();
-    if (agentName.trim()) {
-      const name = agentName.trim().startsWith("Agent") ? agentName.trim() : `Agent ${agentName.trim()}`;
-      setSavedCallsign(name);
-      localStorage.setItem("aegis_agent_name", name);
+    const finalName = agentName.trim()
+      ? agentName.trim().toUpperCase().startsWith("AGENT")
+        ? agentName.trim().toUpperCase()
+        : `AGENT ${agentName.trim().toUpperCase()}`
+      : "AGENT UMAR";
+
+    setSavedCallsign(finalName);
+    localStorage.setItem("aegis_agent_name", finalName);
+
+    if (slide < 4) {
+      setSlide((prev) => prev + 1);
+    } else {
+      router.push("/dashboard");
     }
   };
 
@@ -52,376 +55,362 @@ export default function OnboardingLanding() {
     if (slide > 0) setSlide((prev) => prev - 1);
   };
 
-  const slidesData = [
-    { title: "FUTURE SECURITY, REDEFINED.", subtitle: "Kernel-Level eBPF Supply Chain Defense Platform" },
-    { title: "THE INVISIBLE ATTACK SURFACE.", subtitle: "npm `postinstall` Lifecycle Hook Exploits & Credential Theft" },
-    { title: "THE AEGIS SOLUTION.", subtitle: "0% Overhead Syscall Interception & Provenance Graph" },
-    { title: "HYBRID DEPLOYMENT & TESTING.", subtitle: "Vercel Simulation Mode & Linux Kernel Integration" },
-    { title: "AGENT CLEARANCE GRANTED.", subtitle: "Initialize Your eBPF Runtime Security Console" },
+  const navTabs = [
+    { label: "MISSION", idx: 0 },
+    { label: "THREAT", idx: 1 },
+    { label: "PROTOCOL", idx: 2 },
+    { label: "ACCESS", idx: 3 },
+    { label: "CLEARANCE", idx: 4 },
   ];
 
   return (
-    <div className="w-screen h-screen bg-[#07090e] p-4 md:p-8 flex flex-col items-center justify-center font-sans overflow-hidden select-none relative">
-      {/* Outer Wavy / Grid Dark Backdrop */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-950/20 via-[#07090e] to-[#030407] pointer-events-none" />
+    <div className="w-screen h-screen bg-[#090c0a] text-[#e5ebe7] p-3 sm:p-6 flex items-center justify-center font-sans overflow-hidden select-none relative">
+      {/* Background Subtle Grid Effect */}
+      <div className="absolute inset-0 bg-[radial-gradient(#1c2520_1px,transparent_1px)] [background-size:24px_24px] opacity-40 pointer-events-none" />
 
-      {/* Main Glass Floating Window Frame (Matching Reference Image Layout) */}
-      <div className="w-full max-w-6xl h-[720px] bg-[#0d1017] rounded-[2.5rem] border border-white/10 shadow-[0_0_90px_rgba(0,0,0,0.9)] relative overflow-hidden flex flex-col justify-between p-6 md:p-8 z-10 backdrop-blur-2xl">
+      {/* Main Container Window Frame matching screenshot */}
+      <div className="w-full max-w-5xl h-[780px] max-h-[95vh] bg-[#0e1210] rounded-[2rem] border border-[#1f2923] shadow-[0_0_80px_rgba(0,0,0,0.8)] relative overflow-hidden flex flex-col justify-between p-6 md:p-8 z-10">
 
-        {/* ─── Top Pill Navigation Bar ─── */}
-        <header className="flex items-center justify-between z-20 shrink-0">
-          {/* Top Left Logo Pill */}
-          <div className="flex items-center gap-3 bg-white/5 border border-white/10 px-4 py-2 rounded-full backdrop-blur-md">
-            <Shield className="w-5 h-5 text-cyan-400" />
-            <span className="font-mono font-black text-sm tracking-wider text-slate-100 uppercase">
-              AELFRA AEGIS
-            </span>
+        {/* ─── Top Header Navigation Bar ─── */}
+        <header className="flex items-center justify-between shrink-0 z-20">
+          {/* Logo */}
+          <div className="font-serif italic font-black text-2xl tracking-wider text-[#e5ebe7]">
+            AEGIS
           </div>
 
-          {/* Top Center Pills (Quick Jump Navigation) */}
-          <div className="hidden md:flex items-center gap-2 bg-black/40 border border-white/10 p-1.5 rounded-full backdrop-blur-md text-xs font-mono">
-            {["OVERVIEW", "THE PROBLEM", "OUR SOLUTION", "TESTING", "CONSOLE"].map((label, idx) => (
+          {/* Center Navigation Capsule */}
+          <div className="flex items-center gap-1 bg-[#131916] border border-[#1f2923] p-1 rounded-full text-xs font-mono">
+            {navTabs.map((tab) => (
               <button
-                key={idx}
-                onClick={() => setSlide(idx)}
-                className={`px-4 py-1.5 rounded-full transition-all duration-300 font-bold ${
-                  slide === idx
-                    ? "bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30"
-                    : "text-slate-400 hover:text-slate-200"
+                key={tab.idx}
+                onClick={() => setSlide(tab.idx)}
+                className={`px-4 py-1.5 rounded-full transition-all duration-300 font-bold uppercase tracking-wider ${
+                  slide === tab.idx
+                    ? "bg-[#3c4f45] text-[#e5ebe7] shadow-sm"
+                    : "text-[#7a8e82] hover:text-[#b5c7bc]"
                 }`}
               >
-                {label}
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {/* Top Right Action Pills */}
+          {/* Top Right Circular Buttons */}
           <div className="flex items-center gap-2">
             <button
               onClick={() => router.push("/dashboard")}
-              className="hidden sm:flex items-center gap-2 bg-white text-slate-950 font-black px-5 py-2.5 rounded-full text-xs hover:bg-cyan-400 transition-all duration-200 shadow-lg shadow-white/10 cursor-pointer font-mono"
+              className="w-9 h-9 rounded-full border border-[#1f2923] bg-[#131916] flex items-center justify-center text-[#7a8e82] hover:text-[#e5ebe7] transition-colors"
+              title="Quick Search / Console"
             >
-              <span>LAUNCH CONSOLE</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <Search className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => router.push("/dashboard")}
+              className="w-9 h-9 rounded-full border border-[#1f2923] bg-[#131916] flex items-center justify-center text-[#7a8e82] hover:text-[#e5ebe7] transition-colors"
+              title="Launch Console"
+            >
+              <Sun className="w-4 h-4" />
             </button>
           </div>
         </header>
 
-        {/* ─── Main Slide Content Viewport ─── */}
-        <main className="flex-1 my-4 relative overflow-hidden flex items-center">
-          {/* SLIDE 0: HERO & CALLSIGN SETUP */}
+        {/* ─── Main Viewport Area ─── */}
+        <main className="flex-1 my-3 relative overflow-hidden flex flex-col justify-between">
+
+          {/* SLIDE 0: MISSION (Exact Page 1 from Screenshot) */}
           {slide === 0 && (
-            <div className="w-full h-full flex flex-col md:flex-row items-center justify-between gap-8 animate-in fade-in duration-500">
-              {/* Left Column Text & Name Input */}
-              <div className="flex-1 space-y-6 z-10">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold tracking-wider">
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>NEXT-GEN eBPF RUNTIME DEFENSE</span>
-                </div>
-
-                <h1 className="text-4xl md:text-5xl font-black text-slate-100 tracking-tight leading-tight uppercase font-mono">
-                  FUTURE SECURITY, <br />
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400">
-                    REDEFINED.
-                  </span>
-                </h1>
-
-                <p className="text-sm text-slate-400 max-w-md font-sans leading-relaxed">
-                  Real-time kernel-level eBPF detection for npm supply chain attacks, `.env` exfiltration, and unauthorized process spawns — with a live React Flow provenance graph and 1-click kill switch.
-                </p>
-
-                {/* Agent Callsign Input Box */}
-                <form onSubmit={handleSaveName} className="flex items-center gap-2 max-w-md pt-2">
-                  <div className="relative flex-1">
-                    <User className="w-4 h-4 text-cyan-400 absolute left-3.5 top-3" />
-                    <input
-                      type="text"
-                      value={agentName}
-                      onChange={(e) => setAgentName(e.target.value)}
-                      placeholder="Enter your Callsign (e.g. Agent Umar)"
-                      className="w-full bg-black/60 border border-slate-700 focus:border-cyan-400 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-slate-100 font-mono focus:outline-none transition-all"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-mono font-bold px-4 py-2.5 rounded-2xl text-xs transition-all shadow-md shadow-cyan-500/20"
-                  >
-                    Save Callsign
-                  </button>
-                </form>
-                <div className="text-[11px] text-slate-500 font-mono">
-                  Current Clearance: <strong className="text-cyan-400">{savedCallsign}</strong>
-                </div>
-              </div>
-
-              {/* Right Column Cyber Sentinel Hero Image (Matching Photo Style) */}
-              <div className="relative w-full md:w-[480px] h-[380px] rounded-3xl overflow-hidden border border-white/10 shadow-2xl group">
+            <div className="w-full h-full flex flex-col justify-between animate-in fade-in duration-300">
+              {/* Hero Cyber Sentinel Image Card */}
+              <div className="w-full h-[270px] sm:h-[300px] rounded-2xl relative overflow-hidden border border-[#1f2923] shrink-0 shadow-lg">
                 <Image
                   src="/hero.jpg"
-                  alt="Cyber Sentinel Aegis"
+                  alt="Cyber Sentinel Agent"
                   fill
-                  className="object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="object-cover object-top"
                   priority
                 />
 
-                {/* Floating Annotation Callout Lines (Exact Style of Reference Image) */}
-                <div className="absolute top-12 left-6 bg-black/70 backdrop-blur-md border border-cyan-500/40 px-3 py-1.5 rounded-xl text-[10px] font-mono text-cyan-300 shadow-xl flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
-                  <span>eBPF PROBE MK-I — $0 OVERHEAD</span>
-                </div>
-
-                <div className="absolute bottom-16 right-6 bg-black/70 backdrop-blur-md border border-red-500/40 px-3 py-1.5 rounded-xl text-[10px] font-mono text-red-300 shadow-xl flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span>REALTIME KILL SWITCH — ACTIVE</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* SLIDE 1: THE PROBLEM */}
-          {slide === 1 && (
-            <div className="w-full h-full flex flex-col md:flex-row items-center justify-between gap-8 animate-in fade-in duration-500">
-              <div className="flex-1 space-y-5">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono font-bold">
-                  <AlertTriangle className="w-3.5 h-3.5" />
-                  <span>THE THREAT MATRIX</span>
-                </div>
-
-                <h2 className="text-3xl md:text-4xl font-black text-slate-100 uppercase font-mono">
-                  THE INVISIBLE <br />
-                  <span className="text-red-500">ATTACK SURFACE.</span>
-                </h2>
-
-                <p className="text-xs md:text-sm text-slate-400 leading-relaxed font-sans">
-                  Modern npm packages run automatic <code className="text-red-400 bg-red-950/50 px-1.5 py-0.5 rounded font-mono">postinstall</code> scripts during package installation. Attackers hijack popular or typosquatted packages to execute hidden code before developers notice.
-                </p>
-
-                <div className="space-y-2.5 font-mono text-xs pt-2">
-                  <div className="p-3 rounded-2xl bg-red-950/20 border border-red-800/60 flex items-start gap-3">
-                    <Flame className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-red-200 block">1. Silent Credential Theft</strong>
-                      <span className="text-slate-400 text-[11px]">Traverses parent directories to open and read `.env` secrets & AWS API keys.</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-amber-950/20 border border-amber-800/60 flex items-start gap-3">
-                    <Zap className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-amber-200 block">2. HTTP POST Data Exfiltration</strong>
-                      <span className="text-slate-400 text-[11px]">POSTs stolen environment variables to external C2 endpoints.</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3 rounded-2xl bg-cyan-950/20 border border-cyan-800/60 flex items-start gap-3">
-                    <Terminal className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                    <div>
-                      <strong className="text-cyan-200 block">3. Reverse Shell Execution</strong>
-                      <span className="text-slate-400 text-[11px]">Spawns hidden child shell processes (<code className="text-cyan-300">bash -c "id"</code>) for reconnaissance.</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-full md:w-[460px] h-[340px] glass-card p-6 rounded-3xl border border-red-500/30 flex flex-col justify-between font-mono text-xs relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-3xl" />
-                <div className="flex justify-between items-center border-b border-slate-800 pb-3">
-                  <span className="text-red-400 font-bold flex items-center gap-2">
-                    <AlertTriangle className="w-4 h-4" /> TRADITIONAL SCANNERS FAIL
+                {/* Overlaid Tags Pill Bar */}
+                <div className="absolute bottom-4 left-4 flex flex-wrap items-center gap-2 font-mono text-[10px]">
+                  <span className="px-3 py-1 rounded-md bg-black/70 border border-white/10 text-[#e5ebe7] backdrop-blur-md uppercase font-bold tracking-wider">
+                    eBPF PROBE
                   </span>
-                  <span className="text-[10px] text-slate-500">Static AST Audit</span>
-                </div>
-                <div className="space-y-2 text-[11px] text-slate-400 leading-relaxed font-sans">
-                  Traditional dependency scanners (like `npm audit` or static AST linters) inspect declared JSON manifests. They cannot detect dynamic zero-day obfuscated syscall payloads executing inside postinstall hooks at installation runtime.
-                </div>
-                <div className="p-3 bg-red-950/40 border border-red-800/60 rounded-xl text-red-300 text-[11px]">
-                  Result: Credentials leak before static security tools flag the package.
+                  <span className="px-3 py-1 rounded-md bg-black/70 border border-white/10 text-[#e5ebe7] backdrop-blur-md uppercase font-bold tracking-wider">
+                    KILL SWITCH
+                  </span>
+                  <span className="px-3 py-1 rounded-md bg-black/70 border border-white/10 text-[#e5ebe7] backdrop-blur-md uppercase font-bold tracking-wider">
+                    CLASSIFIER
+                  </span>
+                  <span className="px-3 py-1 rounded-md bg-black/70 border border-white/10 text-[#e5ebe7] backdrop-blur-md uppercase font-bold tracking-wider">
+                    GRAPH ENGINE
+                  </span>
                 </div>
               </div>
+
+              {/* Tag & Display Headline */}
+              <div className="relative mt-3">
+                <div className="inline-block px-2.5 py-1 rounded-md bg-[#131916] border border-[#1f2923] text-[10px] font-mono text-[#7a8e82] uppercase tracking-widest mb-2 font-semibold">
+                  AELFRA AEGIS v1.0 — CLASSIFIED
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-[#e5ebe7] font-mono tracking-tight leading-[0.92] uppercase">
+                  KERNEL-LEVEL <br />
+                  DEFENSE. <br />
+                  REDEFINED.
+                </h1>
+
+                <p className="text-xs sm:text-sm text-[#8f9e95] max-w-xl font-sans mt-2 leading-relaxed">
+                  The first eBPF-powered runtime supply chain attack detector. Silent. Zero overhead. Absolute.
+                </p>
+
+                {/* Left & Right Side Arrow Buttons */}
+                <button
+                  onClick={prevSlide}
+                  disabled={slide === 0}
+                  className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-[#1f2923] bg-[#131916]/80 backdrop-blur-md flex items-center justify-center text-[#7a8e82] disabled:opacity-20 disabled:cursor-not-allowed hover:text-[#e5ebe7] transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={nextSlide}
+                  className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-[#1f2923] bg-[#3c4f45] flex items-center justify-center text-[#e5ebe7] hover:bg-[#4a5f54] transition-all shadow-md"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Callsign Form Input & Initialize Button */}
+              <form onSubmit={handleSaveNameAndProceed} className="space-y-2 mt-2">
+                <div className="text-[10px] font-mono tracking-widest text-[#7a8e82] uppercase">
+                  ENTER YOUR CALLSIGN, AGENT
+                </div>
+                <input
+                  type="text"
+                  value={agentName}
+                  onChange={(e) => setAgentName(e.target.value)}
+                  placeholder="CALLSIGN_"
+                  className="w-full bg-transparent border-b border-[#28352e] focus:border-[#3c4f45] pb-1 text-sm font-mono text-[#e5ebe7] placeholder:text-[#3c4f45] focus:outline-none tracking-widest uppercase transition-colors"
+                />
+
+                <button
+                  type="submit"
+                  className="w-full bg-[#3c4f45] hover:bg-[#4a5f54] text-[#e5ebe7] font-mono font-bold text-xs py-3.5 px-6 rounded-xl tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md mt-2"
+                >
+                  <span>INITIALIZE SESSION →</span>
+                </button>
+              </form>
             </div>
           )}
 
-          {/* SLIDE 2: THE SOLUTION */}
-          {slide === 2 && (
-            <div className="w-full h-full flex flex-col md:flex-row items-center justify-between gap-8 animate-in fade-in duration-500">
-              <div className="flex-1 space-y-5">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold">
-                  <Cpu className="w-3.5 h-3.5" />
-                  <span>KERNEL-LEVEL EBPF PROBES</span>
-                </div>
-
-                <h2 className="text-3xl md:text-4xl font-black text-slate-100 uppercase font-mono">
-                  ZERO-OVERHEAD <br />
-                  <span className="text-cyan-400">KERNEL INTERCEPTION.</span>
-                </h2>
-
-                <p className="text-xs md:text-sm text-slate-400 leading-relaxed font-sans">
-                  Aelfra Aegis installs lightweight eBPF probes directly at kernel tracepoints (<code className="text-cyan-300 font-mono">openat</code>, <code className="text-cyan-300 font-mono">execve</code>, <code className="text-cyan-300 font-mono">connect</code>). It streams syscall events over a lockless BPF ring buffer with &lt;1% CPU overhead.
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 font-mono text-xs pt-2">
-                  <div className="p-3 rounded-2xl glass-card border border-cyan-500/30">
-                    <strong className="text-cyan-400 block mb-1">Causal Provenance</strong>
-                    <span className="text-slate-400 text-[11px]">Correlates parent process tree (`ppid` → `pid`) into temporal graph.</span>
-                  </div>
-                  <div className="p-3 rounded-2xl glass-card border border-red-500/30">
-                    <strong className="text-red-400 block mb-1">1-Click Kill Switch</strong>
-                    <span className="text-slate-400 text-[11px]">Transmits instant SIGKILL over WebSocket to terminate compromised PIDs.</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="relative w-full md:w-[460px] h-[340px] rounded-3xl overflow-hidden border border-cyan-500/30 shadow-2xl">
+          {/* SLIDE 1: THREAT */}
+          {slide === 1 && (
+            <div className="w-full h-full flex flex-col justify-between animate-in fade-in duration-300">
+              <div className="w-full h-[270px] sm:h-[300px] rounded-2xl relative overflow-hidden border border-[#1f2923] shrink-0 shadow-lg">
                 <Image
                   src="/kernel.jpg"
-                  alt="eBPF Kernel Probe Core"
+                  alt="Threat Vector"
                   fill
                   className="object-cover"
                 />
-                <div className="absolute bottom-4 left-4 right-4 bg-black/80 backdrop-blur-md border border-cyan-500/40 p-3 rounded-2xl text-xs font-mono flex items-center justify-between text-cyan-300">
-                  <span>BPF_RINGBUF_OUTPUT Active</span>
-                  <span className="text-emerald-400 font-bold">0.12% CPU</span>
+                <div className="absolute bottom-4 left-4 px-3 py-1 rounded-md bg-black/80 border border-red-500/40 text-red-400 font-mono text-[10px] uppercase font-bold tracking-wider">
+                  ⚠️ THREAT MATRIX — POSTINSTALL HIJACKING
                 </div>
+              </div>
+
+              <div className="relative mt-3">
+                <div className="inline-block px-2.5 py-1 rounded-md bg-[#131916] border border-[#1f2923] text-[10px] font-mono text-red-400 uppercase tracking-widest mb-2 font-semibold">
+                  SUPPLY CHAIN VULNERABILITY
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl font-black text-[#e5ebe7] font-mono tracking-tight leading-[0.92] uppercase">
+                  THE INVISIBLE <br />
+                  ATTACK SURFACE.
+                </h1>
+
+                <p className="text-xs sm:text-sm text-[#8f9e95] max-w-xl font-sans mt-2 leading-relaxed">
+                  npm packages execute uncontrolled lifecycle scripts. Typosquatted packages read `.env` secrets and exfiltrate credentials before static scanners notice.
+                </p>
+
+                <button
+                  onClick={prevSlide}
+                  className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-[#1f2923] bg-[#131916]/80 flex items-center justify-center text-[#7a8e82] hover:text-[#e5ebe7] transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={nextSlide}
+                  className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-[#1f2923] bg-[#3c4f45] flex items-center justify-center text-[#e5ebe7] hover:bg-[#4a5f54] transition-all shadow-md"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={nextSlide}
+                  className="w-full bg-[#3c4f45] hover:bg-[#4a5f54] text-[#e5ebe7] font-mono font-bold text-xs py-3.5 px-6 rounded-xl tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <span>SEE DEFENSE PROTOCOL →</span>
+                </button>
               </div>
             </div>
           )}
 
-          {/* SLIDE 3: TESTING & SETUP */}
+          {/* SLIDE 2: PROTOCOL */}
+          {slide === 2 && (
+            <div className="w-full h-full flex flex-col justify-between animate-in fade-in duration-300">
+              <div className="w-full h-[270px] sm:h-[300px] rounded-2xl relative overflow-hidden border border-[#1f2923] shrink-0 shadow-lg">
+                <Image
+                  src="/kernel.jpg"
+                  alt="Protocol Architecture"
+                  fill
+                  className="object-cover"
+                />
+                <div className="absolute bottom-4 left-4 px-3 py-1 rounded-md bg-black/80 border border-emerald-500/40 text-emerald-400 font-mono text-[10px] uppercase font-bold tracking-wider">
+                  ⚡ RING BUFFER TRACEPOINTS — openat, execve, connect
+                </div>
+              </div>
+
+              <div className="relative mt-3">
+                <div className="inline-block px-2.5 py-1 rounded-md bg-[#131916] border border-[#1f2923] text-[10px] font-mono text-[#7a8e82] uppercase tracking-widest mb-2 font-semibold">
+                  KERNEL INTERCEPTION ENGINE
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl font-black text-[#e5ebe7] font-mono tracking-tight leading-[0.92] uppercase">
+                  ZERO OVERHEAD. <br />
+                  KERNEL PROBES.
+                </h1>
+
+                <p className="text-xs sm:text-sm text-[#8f9e95] max-w-xl font-sans mt-2 leading-relaxed">
+                  Attaches eBPF C probes directly to kernel tracepoints. Streams events over lockless BPF ring buffers with &lt;1% CPU overhead.
+                </p>
+
+                <button
+                  onClick={prevSlide}
+                  className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-[#1f2923] bg-[#131916]/80 flex items-center justify-center text-[#7a8e82] hover:text-[#e5ebe7] transition-all"
+                >
+                  <ChevronLeft className="w-5 h-5" />
+                </button>
+
+                <button
+                  onClick={nextSlide}
+                  className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full border border-[#1f2923] bg-[#3c4f45] flex items-center justify-center text-[#e5ebe7] hover:bg-[#4a5f54] transition-all shadow-md"
+                >
+                  <ChevronRight className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={nextSlide}
+                  className="w-full bg-[#3c4f45] hover:bg-[#4a5f54] text-[#e5ebe7] font-mono font-bold text-xs py-3.5 px-6 rounded-xl tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <span>SELECT ACCESS MODE →</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* SLIDE 3: ACCESS */}
           {slide === 3 && (
-            <div className="w-full h-full flex flex-col justify-center space-y-6 animate-in fade-in duration-500">
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-mono font-bold">
-                  <Layers className="w-3.5 h-3.5" />
-                  <span>HYBRID TESTING MODES</span>
+            <div className="w-full h-full flex flex-col justify-between animate-in fade-in duration-300 font-mono">
+              <div className="space-y-2 mt-2">
+                <div className="inline-block px-2.5 py-1 rounded-md bg-[#131916] border border-[#1f2923] text-[10px] text-[#7a8e82] uppercase tracking-widest font-semibold">
+                  HYBRID ENVIRONMENT
                 </div>
-                <h2 className="text-3xl font-black text-slate-100 uppercase font-mono">
-                  TEST AEGIS YOUR WAY.
-                </h2>
+                <h1 className="text-3xl sm:text-4xl font-black text-[#e5ebe7] uppercase">
+                  SELECT ACCESS MODE.
+                </h1>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 font-mono text-xs">
-                {/* Card 1: Vercel Simulation Mode */}
-                <div className="glass-card p-6 rounded-3xl border border-cyan-500/40 space-y-3 relative overflow-hidden group hover:border-cyan-400 transition-all">
-                  <div className="flex justify-between items-center">
-                    <span className="text-cyan-400 font-bold text-sm flex items-center gap-2">
-                      <Play className="w-4 h-4" /> 1. In-Browser Simulation
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-800">
-                      Vercel Ready
-                    </span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 my-2">
+                <div
+                  onClick={() => router.push("/dashboard")}
+                  className="p-5 rounded-2xl bg-[#131916] border border-[#1f2923] hover:border-[#3c4f45] transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="text-[#e5ebe7] font-bold text-sm flex items-center justify-between">
+                    <span>1. IN-BROWSER SIMULATION</span>
+                    <span className="text-[10px] text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-800">VERCEL READY</span>
                   </div>
-                  <p className="text-slate-400 text-xs font-sans leading-relaxed">
-                    Test the complete provenance graph, threat alerts, and kill switch instantly right inside your browser without installing anything locally.
+                  <p className="text-xs text-[#8f9e95] font-sans leading-relaxed">
+                    Test the complete provenance graph, threat alerts, and 1-click kill switch directly in your browser.
                   </p>
-                  <button
-                    onClick={() => router.push("/dashboard")}
-                    className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold py-2.5 rounded-xl transition-all shadow-md shadow-cyan-500/20"
-                  >
-                    Launch Browser Simulator →
-                  </button>
+                  <div className="text-xs text-[#3c4f45] group-hover:text-[#e5ebe7] font-bold transition-colors pt-1">
+                    LAUNCH SIMULATOR →
+                  </div>
                 </div>
 
-                {/* Card 2: Local Linux Kernel eBPF Mode */}
-                <div className="glass-card p-6 rounded-3xl border border-slate-700 space-y-3 relative overflow-hidden group hover:border-slate-500 transition-all">
-                  <div className="flex justify-between items-center">
-                    <span className="text-slate-200 font-bold text-sm flex items-center gap-2">
-                      <Terminal className="w-4 h-4 text-cyan-400" /> 2. Local eBPF Linux Mode
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">
-                      Full Pipeline
-                    </span>
+                <div
+                  onClick={() => router.push("/dashboard")}
+                  className="p-5 rounded-2xl bg-[#131916] border border-[#1f2923] hover:border-[#3c4f45] transition-all cursor-pointer space-y-2 group"
+                >
+                  <div className="text-[#e5ebe7] font-bold text-sm flex items-center justify-between">
+                    <span>2. LOCAL LINUX DAEMON</span>
+                    <span className="text-[10px] text-slate-400 bg-slate-800 px-2 py-0.5 rounded">WS://8765</span>
                   </div>
-                  <p className="text-slate-400 text-xs font-sans leading-relaxed">
-                    Run the Python BCC daemon with kernel tracepoints attached locally on Ubuntu / WSL2 to capture real syscalls.
+                  <p className="text-xs text-[#8f9e95] font-sans leading-relaxed">
+                    Connect to your local Python BCC daemon running kernel tracepoints on Linux/WSL2.
                   </p>
-                  <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-[10px] text-slate-300">
-                    <code>sudo python3 ebpf/daemon.py</code>
+                  <div className="text-xs text-[#3c4f45] group-hover:text-[#e5ebe7] font-bold transition-colors pt-1">
+                    CONNECT DAEMON →
                   </div>
                 </div>
+              </div>
+
+              <div className="pt-2">
+                <button
+                  onClick={nextSlide}
+                  className="w-full bg-[#3c4f45] hover:bg-[#4a5f54] text-[#e5ebe7] font-mono font-bold text-xs py-3.5 px-6 rounded-xl tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-md"
+                >
+                  <span>OBTAIN CLEARANCE →</span>
+                </button>
               </div>
             </div>
           )}
 
-          {/* SLIDE 4: CLEARANCE LAUNCH */}
+          {/* SLIDE 4: CLEARANCE */}
           {slide === 4 && (
-            <div className="w-full h-full flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in duration-500 font-mono">
-              <div className="p-4 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-xl shadow-cyan-500/10">
-                <CheckCircle2 className="w-12 h-12" />
+            <div className="w-full h-full flex flex-col items-center justify-center text-center space-y-5 animate-in fade-in duration-300 font-mono">
+              <div className="w-14 h-14 rounded-full bg-[#131916] border border-[#3c4f45] flex items-center justify-center text-[#e5ebe7] shadow-xl">
+                <CheckCircle2 className="w-7 h-7 text-[#e5ebe7]" />
               </div>
 
               <div className="space-y-2">
-                <span className="text-xs text-cyan-400 font-bold tracking-widest uppercase">SECURITY CLEARANCE APPROVED</span>
-                <h2 className="text-3xl md:text-5xl font-black text-slate-100 tracking-tight uppercase">
-                  WELCOME, <span className="text-cyan-400">{savedCallsign}</span>
-                </h2>
-                <p className="text-xs text-slate-400 max-w-md mx-auto font-sans leading-relaxed">
-                  Your eBPF runtime defense console is configured and ready. Access live provenance graphs, event streams, and kill controls.
+                <div className="text-[10px] text-[#7a8e82] uppercase tracking-widest">SECURITY CLEARANCE APPROVED</div>
+                <h1 className="text-3xl sm:text-5xl font-black text-[#e5ebe7] uppercase tracking-tight">
+                  WELCOME, {savedCallsign || "AGENT"}
+                </h1>
+                <p className="text-xs sm:text-sm text-[#8f9e95] max-w-md mx-auto font-sans leading-relaxed">
+                  Your clearance token has been generated. Access the live eBPF runtime defense console.
                 </p>
               </div>
 
-              <div className="pt-4">
-                <Link
-                  href="/dashboard"
-                  className="inline-flex items-center gap-3 bg-gradient-to-r from-cyan-400 to-blue-500 hover:from-cyan-300 hover:to-blue-400 text-slate-950 font-black px-8 py-4 rounded-2xl text-sm transition-all shadow-xl shadow-cyan-500/30 cursor-pointer tracking-wider"
+              <div className="w-full max-w-md pt-2">
+                <button
+                  onClick={() => router.push("/dashboard")}
+                  className="w-full bg-[#3c4f45] hover:bg-[#4a5f54] text-[#e5ebe7] font-mono font-bold text-xs py-4 px-6 rounded-xl tracking-widest uppercase transition-all flex items-center justify-center gap-2 cursor-pointer shadow-lg"
                 >
-                  <span>ENTER LIVE CONSOLE</span>
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
+                  <span>ENTER LIVE CONSOLE →</span>
+                </button>
               </div>
             </div>
           )}
+
         </main>
 
-        {/* ─── Bottom Footer Bar & Slide Pagination Controls (Matching Photo) ─── */}
-        <footer className="flex items-center justify-between border-t border-white/10 pt-4 z-20 shrink-0 font-mono text-xs">
-          {/* Left Slide Description Pill */}
-          <div className="flex items-center gap-3">
-            <span className="text-slate-500">PHASE 0{slide + 1} / 05</span>
-            <span className="text-slate-300 font-bold truncate max-w-[200px] sm:max-w-none">
-              {slidesData[slide].title}
-            </span>
-          </div>
-
-          {/* Right Thumbnail & Slide Pagination Arrow Controls (Matching Reference Image) */}
-          <div className="flex items-center gap-4">
-            {/* Small Bottom Right Preview Thumbnail Pill */}
-            <div className="hidden sm:flex items-center gap-3 bg-white/5 border border-white/10 px-3 py-1.5 rounded-2xl">
-              <div className="w-8 h-8 rounded-lg overflow-hidden relative">
-                <Image src="/hero.jpg" alt="Preview" fill className="object-cover" />
-              </div>
-              <div className="text-[10px]">
-                <div className="text-slate-300 font-bold">NEXT FEATURE</div>
-                <div className="text-slate-500">{slide < 4 ? slidesData[slide + 1].title.slice(0, 15) + "..." : "LAUNCH"}</div>
-              </div>
-            </div>
-
-            {/* Slide Arrows */}
-            <div className="flex items-center gap-2">
-              <button
-                onClick={prevSlide}
-                disabled={slide === 0}
-                className={`p-2.5 rounded-full border transition-all ${
-                  slide === 0
-                    ? "border-slate-800 text-slate-700 cursor-not-allowed"
-                    : "border-white/20 text-slate-200 hover:bg-white/10 cursor-pointer"
-                }`}
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-
-              <button
-                onClick={nextSlide}
-                disabled={slide === 4}
-                className={`p-2.5 rounded-full border transition-all ${
-                  slide === 4
-                    ? "border-slate-800 text-slate-700 cursor-not-allowed"
-                    : "border-cyan-500/50 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500 hover:text-slate-950 cursor-pointer"
-                }`}
-              >
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+        {/* ─── Bottom Page Pagination Dots (Exact from Screenshot) ─── */}
+        <footer className="flex items-center justify-center gap-2 pt-2 shrink-0 z-20">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <button
+              key={i}
+              onClick={() => setSlide(i)}
+              className={`w-2 h-2 rounded-full transition-all ${
+                slide === i ? "bg-[#e5ebe7] w-2.5 h-2.5" : "bg-[#28352e] hover:bg-[#3c4f45]"
+              }`}
+            />
+          ))}
         </footer>
 
       </div>
