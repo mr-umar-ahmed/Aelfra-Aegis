@@ -30,6 +30,7 @@ import {
   Server,
   Radio,
   Cpu,
+  Menu,
 } from "lucide-react";
 
 const DEFAULT_WS_URL = "ws://localhost:8765";
@@ -43,6 +44,9 @@ export default function DashboardPage() {
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showHelpModal, setShowHelpModal] = useState(false);
   const [showSimMenu, setShowSimMenu] = useState(false);
+
+  // Mobile Active View Mode ('graph' | 'threats' | 'events' | 'menu')
+  const [mobileView, setMobileView] = useState<"graph" | "threats" | "events" | "menu">("graph");
 
   const [eventLogs, setEventLogs] = useState<KernelEvent[]>([]);
   const [narrations, setNarrations] = useState<NarrationMessage[]>([]);
@@ -442,15 +446,15 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="w-screen h-screen bg-[#0b0c0f] text-white p-2 sm:p-3 flex items-center justify-center font-sans overflow-hidden select-none relative">
-      {/* Outer Spacious Frame with Thick White Container (Matching Image 1 & 2) */}
-      <div className="p-2 sm:p-2.5 bg-[#e5e7eb] rounded-[2.8rem] shadow-[0_0_100px_rgba(0,0,0,0.95)] w-full max-w-[99vw] h-[98vh] relative overflow-hidden flex flex-col justify-between z-10">
+    <div className="w-screen h-screen bg-[#0b0c0f] text-white p-1.5 sm:p-3 flex items-center justify-center font-sans overflow-hidden select-none relative">
+      {/* Outer Spacious Frame */}
+      <div className="p-2 sm:p-2.5 bg-[#e5e7eb] rounded-2xl sm:rounded-[2.8rem] shadow-[0_0_100px_rgba(0,0,0,0.95)] w-full max-w-[99vw] h-[98vh] relative overflow-hidden flex flex-col justify-between z-10">
         
         {/* Inner Jet Black Panel */}
-        <div className="bg-[#09090b] rounded-[2.3rem] p-3 sm:p-4 flex flex-row w-full h-full relative overflow-hidden text-white border border-white/10 gap-3">
+        <div className="bg-[#09090b] rounded-xl sm:rounded-[2.3rem] p-2.5 sm:p-4 flex flex-col lg:flex-row w-full h-full relative overflow-hidden text-white border border-white/10 gap-3">
 
-          {/* ─── Column 1: Left Sidebar (240px) ─── */}
-          <aside className="w-60 bg-white/5 border border-white/10 rounded-3xl flex flex-col shrink-0 z-20 overflow-hidden backdrop-blur-xl">
+          {/* ─── Column 1: Left Sidebar (Desktop & Mobile Menu) ─── */}
+          <aside className={`w-full lg:w-60 bg-white/5 border border-white/10 rounded-3xl flex-col shrink-0 z-20 overflow-hidden backdrop-blur-xl ${mobileView === "menu" ? "flex" : "hidden lg:flex"}`}>
             {/* App Identity Header */}
             <div className="p-3.5 border-b border-white/10">
               <div className="flex items-center gap-2">
@@ -466,7 +470,7 @@ export default function DashboardPage() {
             {/* Navigation Tabs */}
             <nav className="flex-1 px-2.5 py-3 space-y-1.5 font-mono text-xs">
               <button
-                onClick={() => setActiveTab("graph")}
+                onClick={() => { setActiveTab("graph"); setMobileView("graph"); }}
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "graph"
                     ? "bg-white text-black shadow-lg"
@@ -478,7 +482,7 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab("timeline")}
+                onClick={() => { setActiveTab("timeline"); setMobileView("graph"); }}
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "timeline"
                     ? "bg-white text-black shadow-lg"
@@ -490,7 +494,7 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab("analytics")}
+                onClick={() => { setActiveTab("analytics"); setMobileView("graph"); }}
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "analytics"
                     ? "bg-white text-black shadow-lg"
@@ -502,7 +506,7 @@ export default function DashboardPage() {
               </button>
 
               <button
-                onClick={() => setActiveTab("network")}
+                onClick={() => { setActiveTab("network"); setMobileView("graph"); }}
                 className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "network"
                     ? "bg-white text-black shadow-lg"
@@ -535,44 +539,44 @@ export default function DashboardPage() {
           </aside>
 
           {/* ─── Main Workspace Area ─── */}
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 flex flex-col min-w-0 h-full">
             {/* Top Navigation Header Bar */}
-            <header className="h-13 bg-white/5 border border-white/10 rounded-2xl px-4 flex items-center justify-between shrink-0 mb-2.5 font-mono text-xs backdrop-blur-xl py-2">
-              {/* Left Live Metrics */}
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5">
+            <header className="bg-white/5 border border-white/10 rounded-2xl px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 mb-2 font-mono text-xs backdrop-blur-xl">
+              {/* Left Live Metrics (Responsive) */}
+              <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs">
+                <div className="flex items-center gap-1">
                   <Cpu className="w-3.5 h-3.5 text-white" />
-                  <span className="text-slate-400">Processes:</span>
-                  <span className="font-cyber font-black text-white text-xs">{processCount}</span>
+                  <span className="hidden sm:inline text-slate-400">Processes:</span>
+                  <span className="font-cyber font-black text-white">{processCount}</span>
                 </div>
                 <span className="text-slate-700">|</span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" />
-                  <span className="text-slate-400">Compromised:</span>
-                  <span className="font-cyber font-black text-red-400 text-xs">{compromisedCount}</span>
+                  <span className="hidden sm:inline text-slate-400">Compromised:</span>
+                  <span className="font-cyber font-black text-red-400">{compromisedCount}</span>
                 </div>
                 <span className="text-slate-700">|</span>
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                   <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span className="text-slate-400">Killed:</span>
-                  <span className="font-cyber font-black text-emerald-400 text-xs">{terminatedCount}</span>
+                  <span className="hidden sm:inline text-slate-400">Killed:</span>
+                  <span className="font-cyber font-black text-emerald-400">{terminatedCount}</span>
                 </div>
               </div>
 
-              {/* Center Clock */}
-              <div className="text-slate-300 font-mono font-bold tracking-widest bg-white/10 px-3 py-0.5 rounded-full border border-white/15 text-[11px]">
+              {/* Center Clock (Desktop) */}
+              <div className="hidden md:block text-slate-300 font-mono font-bold tracking-widest bg-white/10 px-3 py-0.5 rounded-full border border-white/15 text-[11px]">
                 {clock}
               </div>
 
               {/* Right Action Bar */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <div className="relative">
                   <button
                     onClick={() => setShowSimMenu(!showSimMenu)}
-                    className="flex items-center gap-2 bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-4 py-1.5 rounded-full text-xs shadow-lg transition-all"
+                    className="flex items-center gap-1.5 bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-3 sm:px-4 py-1 rounded-full text-[11px] sm:text-xs shadow-lg transition-all"
                   >
-                    <Play className="w-3.5 h-3.5 fill-current" />
-                    <span>SIMULATE ATTACK</span>
+                    <Play className="w-3 h-3 fill-current" />
+                    <span>SIMULATE</span>
                   </button>
 
                   {showSimMenu && (
@@ -615,7 +619,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowSettingsModal(true)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
                   title="Settings"
                 >
                   <Settings className="w-3.5 h-3.5" />
@@ -623,7 +627,7 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowHelpModal(true)}
-                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
+                  className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
                   title="Guide"
                 >
                   <HelpCircle className="w-3.5 h-3.5" />
@@ -631,55 +635,83 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => exportReportToHTML(incidents)}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white px-3 py-1.5 rounded-full font-cyber font-bold transition-all text-xs"
+                  className="hidden sm:flex items-center gap-1.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white px-3 py-1 rounded-full font-cyber font-bold transition-all text-xs"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>REPORT</span>
                 </button>
-
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/5 font-mono text-xs">
-                  <Radio className={`w-3.5 h-3.5 ${connectionStatus === "connected" ? "text-emerald-400 animate-pulse" : "text-amber-400"}`} />
-                  <span className="font-bold text-slate-200 uppercase text-[9px] tracking-wider">{connectionStatus}</span>
-                </div>
               </div>
             </header>
 
+            {/* ─── Mobile View Selector Bar (< lg) ─── */}
+            <div className="flex lg:hidden items-center justify-between gap-1 bg-white/5 border border-white/10 p-1 rounded-2xl mb-2 text-[10px] font-mono shrink-0 backdrop-blur-md">
+              <button
+                onClick={() => setMobileView("graph")}
+                className={`flex-1 py-1.5 rounded-xl font-cyber font-bold transition-all text-center ${
+                  mobileView === "graph" ? "bg-white text-black shadow-md" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                🎨 GRAPH
+              </button>
+              <button
+                onClick={() => setMobileView("threats")}
+                className={`flex-1 py-1.5 rounded-xl font-cyber font-bold transition-all text-center relative ${
+                  mobileView === "threats" ? "bg-white text-black shadow-md" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                <span>⚠️ THREATS</span>
+                {narrations.length > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-red-500 absolute top-1 right-1 animate-pulse" />
+                )}
+              </button>
+              <button
+                onClick={() => setMobileView("events")}
+                className={`flex-1 py-1.5 rounded-xl font-cyber font-bold transition-all text-center ${
+                  mobileView === "events" ? "bg-white text-black shadow-md" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                ⚡ EVENTS
+              </button>
+              <button
+                onClick={() => setMobileView("menu")}
+                className={`flex-1 py-1.5 rounded-xl font-cyber font-bold transition-all text-center ${
+                  mobileView === "menu" ? "bg-white text-black shadow-md" : "text-slate-300 hover:text-white"
+                }`}
+              >
+                📋 MENU
+              </button>
+            </div>
+
             {/* Critical Alert Banner */}
             {compromisedCount > 0 && terminatedCount < compromisedCount && (
-              <div className="bg-red-950/80 border border-red-800 px-4 py-1.5 rounded-2xl flex items-center justify-between mb-2.5 animate-pulse font-mono text-xs text-red-200 font-bold">
+              <div className="bg-red-950/80 border border-red-800 px-3 py-1.5 rounded-2xl flex items-center justify-between mb-2 animate-pulse font-mono text-[11px] text-red-200 font-bold">
                 <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
-                  <span>SECURITY ALERT: `.env` credential theft detected! Click KILL [PID] on compromised nodes.</span>
+                  <AlertTriangle className="w-4 h-4 text-red-400 shrink-0" />
+                  <span className="truncate">`.env` credential theft! Click KILL [PID] on node.</span>
                 </div>
               </div>
             )}
 
             {/* ─── Main View Switcher ─── */}
-            <div className="flex flex-1 overflow-hidden gap-3">
+            <div className="flex flex-1 overflow-hidden gap-3 h-full">
               {activeTab === "graph" && (
                 <>
-                  {/* ─── Column 2: Center - Spacious Process Graph Canvas (Full Height) ─── */}
-                  <div className="flex-1 flex flex-col min-w-0 relative h-full">
+                  {/* ─── Column 2: Center - Spacious Process Graph Canvas ─── */}
+                  <div className={`flex-1 flex flex-col min-w-0 relative h-full ${mobileView === "graph" ? "flex" : "hidden lg:flex"}`}>
                     <div className="flex-1 bg-black/70 border border-white/10 rounded-3xl overflow-hidden flex flex-col relative shadow-2xl h-full">
                       {connectionStatus === "disconnected" && nodes.length === 0 && (
-                        <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
-                          <Server className="w-10 h-10 text-white animate-pulse" />
-                          <h3 className="text-base font-cyber font-black text-white uppercase">Live eBPF Daemon Offline</h3>
-                          <p className="text-xs text-slate-300 max-w-md font-sans">
-                            You are viewing the hosted dashboard. Click <strong className="text-white">SIMULATE ATTACK</strong> above to run an in-browser attack scenario, or connect your local daemon on <code className="text-white">ws://localhost:8765</code>.
+                        <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-4 text-center">
+                          <Server className="w-8 h-8 text-white animate-pulse" />
+                          <h3 className="text-sm font-cyber font-black text-white uppercase">Live eBPF Daemon Offline</h3>
+                          <p className="text-[11px] text-slate-300 max-w-md font-sans">
+                            You are viewing hosted app. Click <strong className="text-white">SIMULATE</strong> above to run in-browser attack.
                           </p>
-                          <div className="flex items-center gap-3 mt-2 font-mono">
+                          <div className="flex items-center gap-2 mt-1 font-mono">
                             <button
                               onClick={() => runSimulationScenario("full_chain")}
-                              className="bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-5 py-2.5 rounded-full text-xs shadow-lg transition-all"
+                              className="bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-4 py-2 rounded-full text-xs shadow-lg transition-all"
                             >
                               Try In-Browser Simulation
-                            </button>
-                            <button
-                              onClick={() => setShowHelpModal(true)}
-                              className="bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-mono font-bold px-4 py-2.5 rounded-full text-xs transition-all"
-                            >
-                              How to Connect Local Daemon
                             </button>
                           </div>
                         </div>
@@ -696,22 +728,22 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {/* ─── Column 3: Dedicated Behavioral Threat Intelligence Column (User Requested Extra Column) ─── */}
-                  <div className="w-80 sm:w-96 glass-panel border border-white/10 rounded-3xl flex flex-col shrink-0 overflow-hidden h-full">
+                  {/* ─── Column 3: Dedicated Behavioral Threat Intelligence ─── */}
+                  <div className={`w-full lg:w-80 xl:w-96 glass-panel border border-white/10 rounded-3xl flex-col shrink-0 overflow-hidden h-full ${mobileView === "threats" ? "flex" : "hidden lg:flex"}`}>
                     <ThreatPanel narrations={narrations} />
                   </div>
                 </>
               )}
 
               {activeTab === "timeline" && (
-                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
+                <div className="flex-1 p-4 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
                   <div className="max-w-4xl mx-auto space-y-4">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-4">
                       <div>
-                        <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Incident Provenance Timeline</h2>
-                        <p className="text-xs text-slate-400 font-sans">Causal audit trail of all detected supply chain attacks</p>
+                        <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Incident Timeline</h2>
+                        <p className="text-xs text-slate-400 font-sans">Audit trail of supply chain attacks</p>
                       </div>
-                      <div className="relative w-64">
+                      <div className="relative w-full sm:w-64">
                         <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
                         <input
                           type="text"
@@ -733,11 +765,9 @@ export default function DashboardPage() {
                             <div className="flex-1 flex items-center gap-4">
                               <span className="bg-red-950 border border-red-800 text-red-300 text-xs font-cyber font-black px-3 py-1 rounded-full uppercase">{inc.attack_type}</span>
                               <span className="text-xs font-bold text-white">PID: {inc.pid}</span>
-                              <span className="text-xs text-slate-400">{new Date(inc.start_time).toLocaleString()}</span>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <span className="text-xs font-cyber font-bold text-orange-400">Risk Score: {inc.risk_score}</span>
-                              <span className={`text-xs font-bold px-3 py-1 rounded-full ${inc.status === 'terminated' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'}`}>{inc.status.toUpperCase()}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-cyber font-bold text-orange-400">Risk: {inc.risk_score}</span>
                             </div>
                           </div>
                           
@@ -745,16 +775,14 @@ export default function DashboardPage() {
                             <div className="p-4 border-t border-white/10 bg-black/80 text-xs space-y-2">
                               {inc.narration_text && (
                                 <div className="p-3 bg-white/5 border-l-2 border-white text-slate-200 rounded-r-xl">
-                                  <strong className="text-white font-cyber">Intelligence Narrative:</strong> {inc.narration_text}
+                                  <strong className="text-white font-cyber">Narrative:</strong> {inc.narration_text}
                                 </div>
                               )}
-                              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider pt-2">Captured Syscall Events ({inc.events?.length || 0})</div>
                               <div className="max-h-48 overflow-y-auto space-y-1">
                                 {inc.events?.map((e, idx) => (
-                                  <div key={idx} className="flex gap-4 text-xs font-mono p-1.5 hover:bg-white/10 rounded-lg text-slate-300">
-                                    <span className="text-slate-400 w-24">{new Date(e.timestamp).toLocaleTimeString()}</span>
-                                    <span className="text-white font-bold w-24">{e.event_type}</span>
-                                    <span className="text-slate-200 flex-1 truncate">{e.filename || e.comm}</span>
+                                  <div key={idx} className="flex gap-2 text-xs font-mono p-1.5 hover:bg-white/10 rounded-lg text-slate-300">
+                                    <span className="text-white font-bold">{e.event_type}</span>
+                                    <span className="text-slate-200 truncate">{e.filename || e.comm}</span>
                                   </div>
                                 ))}
                               </div>
@@ -768,25 +796,21 @@ export default function DashboardPage() {
               )}
 
               {activeTab === "analytics" && (
-                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
-                  <div className="max-w-4xl mx-auto space-y-6">
-                    <div>
-                      <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Security Analytics & Metrics</h2>
-                      <p className="text-xs text-slate-400 font-sans">Kernel event breakdown and threat metrics</p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
+                <div className="flex-1 p-4 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
+                  <div className="max-w-4xl mx-auto space-y-4">
+                    <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Security Analytics</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="glass-card p-4 rounded-2xl border border-white/10">
-                        <p className="text-xs text-slate-400 font-bold">Total Syscalls Captured</p>
-                        <p className="text-3xl font-cyber font-black text-white mt-2">{eventLogs.length}</p>
+                        <p className="text-xs text-slate-400 font-bold">Total Syscalls</p>
+                        <p className="text-2xl font-cyber font-black text-white mt-1">{eventLogs.length}</p>
                       </div>
                       <div className="glass-card p-4 rounded-2xl border border-white/10">
-                        <p className="text-xs text-slate-400 font-bold">Compromised PIDs</p>
-                        <p className="text-3xl font-cyber font-black text-red-400 mt-2">{compromisedCount}</p>
+                        <p className="text-xs text-slate-400 font-bold">Compromised</p>
+                        <p className="text-2xl font-cyber font-black text-red-400 mt-1">{compromisedCount}</p>
                       </div>
                       <div className="glass-card p-4 rounded-2xl border border-white/10">
-                        <p className="text-xs text-slate-400 font-bold">Terminated PIDs</p>
-                        <p className="text-3xl font-cyber font-black text-emerald-400 mt-2">{terminatedCount}</p>
+                        <p className="text-xs text-slate-400 font-bold">Terminated</p>
+                        <p className="text-2xl font-cyber font-black text-emerald-400 mt-1">{terminatedCount}</p>
                       </div>
                     </div>
                   </div>
@@ -794,31 +818,27 @@ export default function DashboardPage() {
               )}
 
               {activeTab === "network" && (
-                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
-                  <div className="max-w-4xl mx-auto space-y-6">
-                    <div>
-                      <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Network Connection Topology</h2>
-                      <p className="text-xs text-slate-400 font-sans">Outbound socket connections and destination IP status</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="glass-card p-5 rounded-2xl border border-white/10">
-                        <h3 className="text-xs font-bold text-slate-300 uppercase mb-3">Active Sockets</h3>
-                        <div className="text-3xl font-cyber font-black text-white">{networkConnections}</div>
+                <div className="flex-1 p-4 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
+                  <div className="max-w-4xl mx-auto space-y-4">
+                    <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Network Topology</h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="glass-card p-4 rounded-2xl border border-white/10">
+                        <h3 className="text-xs font-bold text-slate-300 uppercase">Active Sockets</h3>
+                        <div className="text-2xl font-cyber font-black text-white mt-1">{networkConnections}</div>
                       </div>
-                      <div className="glass-card p-5 rounded-2xl border border-white/10">
-                        <h3 className="text-xs font-bold text-slate-300 uppercase mb-3">Suspicious Endpoints</h3>
-                        <div className="text-3xl font-cyber font-black text-red-400">{threatsDetected}</div>
+                      <div className="glass-card p-4 rounded-2xl border border-white/10">
+                        <h3 className="text-xs font-bold text-slate-300 uppercase">Suspicious Endpoints</h3>
+                        <div className="text-2xl font-cyber font-black text-red-400 mt-1">{threatsDetected}</div>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* ─── Column 4: Dedicated Live Event Stream Sidebar (280px) ─── */}
-              <div className="w-72 sm:w-80 glass-panel border border-white/10 rounded-3xl flex flex-col shrink-0 overflow-hidden h-full">
+              {/* ─── Column 4: Dedicated Live Event Stream Sidebar ─── */}
+              <div className={`w-full lg:w-72 xl:w-80 glass-panel border border-white/10 rounded-3xl flex-col shrink-0 overflow-hidden h-full ${mobileView === "events" ? "flex" : "hidden lg:flex"}`}>
                 {/* Sidebar Header */}
-                <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-white/5 font-mono">
+                <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-white/5 font-mono">
                   <div className="flex items-center gap-2">
                     <Zap className="w-4 h-4 text-orange-500" />
                     <span className="text-xs font-cyber font-bold text-white uppercase tracking-wider">Live Event Stream</span>
@@ -914,7 +934,7 @@ export default function DashboardPage() {
       {/* ─── Daemon Settings Modal ─── */}
       {showSettingsModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0e0e11] border border-white/20 rounded-3xl p-6 max-w-md w-full font-mono text-xs space-y-4 shadow-2xl">
+          <div className="bg-[#0e0e11] border border-white/20 rounded-3xl p-5 sm:p-6 max-w-md w-full font-mono text-xs space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2 text-sm font-cyber font-bold text-white uppercase">
                 <Settings className="w-4 h-4" />
@@ -954,7 +974,7 @@ export default function DashboardPage() {
       {/* ─── Guide Modal ─── */}
       {showHelpModal && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="bg-[#0e0e11] border border-white/20 rounded-3xl p-6 max-w-lg w-full font-mono text-xs space-y-4 shadow-2xl">
+          <div className="bg-[#0e0e11] border border-white/20 rounded-3xl p-5 sm:p-6 max-w-lg w-full font-mono text-xs space-y-4 shadow-2xl">
             <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2 text-sm font-cyber font-bold text-white uppercase">
                 <HelpCircle className="w-4 h-4" />
