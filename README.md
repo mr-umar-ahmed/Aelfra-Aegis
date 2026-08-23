@@ -9,7 +9,7 @@
 ```
 
 ### eBPF-Powered Supply Chain Runtime Intrusion Detection & Autonomous Defense
-[![Build Status](https://img.shields.io/github/actions/workflow/status/mr-umar-ahmed/Aelfra-Aegis/aegis-scan.yml?branch=main)](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions)
+[![Aegis Security Gate](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions/workflows/aegis-scan.yml/badge.svg)](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions/workflows/aegis-scan.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language](https://img.shields.io/badge/language-C%20%7C%20Python%20%7C%20Next.js-blue.svg)](#tech-stack)
 

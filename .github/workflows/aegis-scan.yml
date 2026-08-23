@@ -1,13 +1,48 @@
-name: Aegis Supply Chain Scan
+name: Aegis Supply Chain Gate
 on: [push, pull_request]
+permissions:
+  contents: read
+
 jobs:
-  aegis-scan:
+  aegis-gate:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Install BCC
-        run: sudo apt-get install -y bpfcc-tools python3-bpfcc
-      - name: Run Aegis Scan
-        run: sudo python3 cli/aegis-scan.py package.json
-        env:
-          ABUSEIPDB_KEY: ${{ secrets.ABUSEIPDB_KEY }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y bpfcc-tools python3-bpfcc python3-pip docker.io
+          pip3 install websockets requests --break-system-packages
+          sudo systemctl start docker
+
+      - name: Verify eBPF support
+        run: |
+          uname -r
+          sudo python3 -c "from bcc import BPF; print('BCC: OK')"
+
+      - name: Start Aegis daemon (headless, audit mode for CI)
+        run: |
+          sudo python3 daemon/daemon.py --mode=audit &
+          sleep 3  # Wait for daemon to initialize
+          echo "Daemon PID: $!"
+
+      - name: Scan project dependencies
+        run: |
+          sudo python3 cli/aegis-scan.py package.json
+
+      - name: Check for incidents
+        run: |
+          if ls data/incidents/*.json 1> /dev/null 2>&1; then
+            echo "THREATS DETECTED — failing build"
+            cat data/incidents/*.json
+            exit 1
+          fi
+          echo "CLEAN — no threats detected"
+
+      - name: Upload audit log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aegis-audit-log
+          path: data/audit/
