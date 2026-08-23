@@ -26,64 +26,64 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
 
   const getStyleClasses = () => {
     if (data.isKilled) {
-      return "border-river bg-river/30 opacity-50 grayscale";
+      return "border-zinc-700 bg-zinc-900/60 opacity-50 grayscale";
     }
     if (data.hasDotEnvAccess) {
-      return "border-siren bg-ocean danger-pulse";
+      return "border-red-500 bg-black danger-pulse shadow-xl shadow-red-500/20";
     }
     if (data.severity === "high") {
-      return "border-siren/70 bg-ocean";
+      return "border-orange-500/80 bg-black shadow-lg shadow-orange-500/10";
     }
     if (data.severity === "medium") {
-      return "border-river bg-ocean";
+      return "border-zinc-700 bg-black";
     }
-    return "border-river/50 bg-ocean hover:border-siren/50";
+    return "border-white/20 bg-[#0c0c0e] hover:border-white/50";
   };
 
   return (
-    <div className={`px-4 py-3 rounded-md border min-w-[210px] transition-all duration-300 ${getStyleClasses()}`}>
+    <div className={`px-4 py-3 rounded-2xl border min-w-[220px] transition-all duration-300 ${getStyleClasses()}`}>
       <Handle
         type="target"
         position={Position.Left}
-        className="w-3 h-3 !bg-siren border !border-ocean"
+        className="w-3.5 h-3.5 !bg-white border-2 !border-black"
       />
 
       {/* Node Header */}
-      <div className="flex items-center justify-between gap-3 border-b border-river/30 pb-2 mb-2">
+      <div className="flex items-center justify-between gap-3 border-b border-white/10 pb-2 mb-2">
         <div className="flex items-center gap-2">
           {data.hasDotEnvAccess ? (
-            <div className="p-1.5 rounded-md bg-siren/20 border border-siren/40 text-villa">
-              <ShieldAlert className="w-4 h-4" />
+            <div className="p-1.5 rounded-xl bg-red-950/80 border border-red-800 text-red-400">
+              <ShieldAlert className="w-4 h-4 animate-pulse" />
             </div>
           ) : data.severity === "high" ? (
-            <div className="p-1.5 rounded-md bg-river/30 border border-river/50 text-villa">
+            <div className="p-1.5 rounded-xl bg-orange-950/80 border border-orange-800 text-orange-400">
               <Wifi className="w-4 h-4" />
             </div>
           ) : (
-            <div className="p-1.5 rounded-md bg-river/20 border border-river/30 text-villa">
+            <div className="p-1.5 rounded-xl bg-white/10 border border-white/20 text-white">
               <Terminal className="w-4 h-4" />
             </div>
           )}
 
           <div>
-            <div className="heading text-sm text-villa uppercase">
+            <div className="font-cyber font-black text-xs text-white uppercase tracking-wider">
               {data.comm}
             </div>
-            <div className="text-[10px] text-siren flex items-center gap-1">
-              <Cpu className="w-3 h-3 text-river" />
+            <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+              <Cpu className="w-3 h-3 text-slate-500" />
               <span>PID: {data.pid}</span>
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 font-mono">
           {data.attack_type && (
-            <span className="label text-[9px] px-2 py-0.5 rounded-md bg-river/20 text-villa border border-river/40">
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-white/10 text-white border border-white/20 uppercase">
               {data.attack_type}
             </span>
           )}
           {data.hasDotEnvAccess && (
-            <span className="label text-[9px] px-2 py-0.5 rounded-md bg-siren/20 text-villa border border-siren/40">
+            <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-red-950 text-red-300 border border-red-800 uppercase">
               COMPROMISED
             </span>
           )}
@@ -91,16 +91,16 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
       </div>
 
       {/* Meta Info */}
-      <div className="text-[11px] text-siren space-y-1 bg-ocean/50 p-2 rounded-md border border-river/20">
+      <div className="text-[10px] font-mono text-slate-300 space-y-1 bg-white/5 p-2 rounded-xl border border-white/10">
         <div className="flex justify-between">
-          <span className="text-river">Parent PID:</span>
-          <span className="text-villa font-semibold">{data.ppid || "None"}</span>
+          <span className="text-slate-400">Parent PID:</span>
+          <span className="text-white font-bold">{data.ppid || "None"}</span>
         </div>
         <div className="flex justify-between items-center">
-          <span className="text-river flex items-center gap-1">
-            <Activity className="w-3 h-3 text-siren" /> Events:
+          <span className="text-slate-400 flex items-center gap-1">
+            <Activity className="w-3 h-3 text-slate-400" /> Syscalls:
           </span>
-          <span className="px-1.5 py-0.5 rounded bg-river/20 text-villa text-[10px] font-semibold">
+          <span className="px-1.5 py-0.5 rounded bg-white/10 text-white font-bold">
             {data.events.length}
           </span>
         </div>
@@ -108,18 +108,18 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
 
       {/* Kill Switch CTA */}
       {data.hasDotEnvAccess && (
-        <div className="mt-2.5 pt-2 border-t border-river/30">
+        <div className="mt-2.5 pt-2 border-t border-white/10">
           {data.isKilled ? (
-            <div className="flex items-center justify-center gap-1.5 text-xs text-siren bg-river/20 border border-river/30 py-2 rounded-md font-semibold">
-              <CheckCircle2 className="w-4 h-4 text-siren" />
+            <div className="flex items-center justify-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/60 border border-emerald-800 py-1.5 rounded-xl font-mono font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
               <span>TERMINATED</span>
             </div>
           ) : currentState === "sent" ? (
-            <div className="text-center text-xs italic text-river font-semibold py-2">
-              SIGKILL sent
+            <div className="text-center text-xs italic text-slate-400 font-mono font-semibold py-1.5">
+              SIGKILL sent...
             </div>
           ) : currentState === "armed" ? (
-            <div className="flex flex-col gap-1.5 transition-all duration-200">
+            <div className="flex flex-col gap-1.5 font-mono">
               <div className="flex gap-2">
                 <button
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
@@ -131,9 +131,9 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
                       setKillConfirmState({ [pidStr]: 'idle' });
                     }, 3000);
                   }}
-                  className="flex-1 flex items-center justify-center text-[10px] font-bold bg-ocean text-villa py-1 px-2 rounded border border-river/30 hover:bg-river/30 cursor-pointer transition-colors"
+                  className="flex-1 text-[10px] font-cyber font-black bg-white hover:bg-orange-500 hover:text-white text-black py-1.5 px-2 rounded-xl transition-all cursor-pointer shadow-md"
                 >
-                  Confirm Kill
+                  CONFIRM KILL
                 </button>
                 <button
                   onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
@@ -141,12 +141,12 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
                     clearTimers();
                     setKillConfirmState({ [pidStr]: 'idle' });
                   }}
-                  className="flex-1 flex items-center justify-center text-[10px] font-bold bg-siren text-ocean py-1 px-2 rounded border border-river/40 hover:bg-river/30 cursor-pointer transition-colors"
+                  className="flex-1 text-[10px] font-cyber font-black bg-red-600 hover:bg-red-700 text-white py-1.5 px-2 rounded-xl transition-all cursor-pointer shadow-md"
                 >
-                  Cancel
+                  CANCEL
                 </button>
               </div>
-              <div className="text-[10px] text-river text-center font-medium">
+              <div className="text-[9px] text-slate-400 text-center font-bold">
                 Auto-cancel in {countdown}s...
               </div>
             </div>
@@ -167,7 +167,7 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
                   setKillConfirmState({ [pidStr]: 'idle' });
                 }, 5000);
               }}
-              className="w-full flex items-center justify-center gap-2 text-xs font-semibold bg-ocean hover:bg-river/30 text-villa py-1.5 px-2.5 rounded-md border border-river cursor-pointer transition-colors"
+              className="w-full flex items-center justify-center gap-2 text-xs font-cyber font-black bg-white hover:bg-red-600 hover:text-white text-black py-2 px-3 rounded-xl transition-all cursor-pointer shadow-lg"
             >
               <Skull className="w-4 h-4" />
               <span>KILL [{data.pid}]</span>
@@ -179,7 +179,7 @@ export function ProcessNode({ data }: NodeProps<ProcessNode>) {
       <Handle
         type="source"
         position={Position.Right}
-        className="w-3 h-3 !bg-siren border !border-ocean"
+        className="w-3.5 h-3.5 !bg-white border-2 !border-black"
       />
     </div>
   );

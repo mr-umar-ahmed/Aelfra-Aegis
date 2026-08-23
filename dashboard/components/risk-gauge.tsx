@@ -9,9 +9,9 @@ interface RiskGaugeProps {
 export function RiskGauge({ data }: RiskGaugeProps) {
   if (!data) {
     return (
-      <div className="flex flex-col items-center justify-center p-4 bg-slate-900/40 rounded-2xl border border-slate-800 text-center">
+      <div className="flex flex-col items-center justify-center p-4 bg-white/5 rounded-2xl border border-white/10 text-center font-mono">
         <ShieldCheck className="w-8 h-8 text-emerald-400 mb-2 animate-pulse" />
-        <span className="text-xs font-bold text-slate-200">PACKAGE RISK INDEX</span>
+        <span className="text-xs font-cyber font-bold text-white uppercase">PACKAGE RISK INDEX</span>
         <span className="text-[10px] text-slate-400 mt-1">0 / 100 — Clean</span>
       </div>
     );
@@ -35,21 +35,21 @@ export function RiskGauge({ data }: RiskGaugeProps) {
   
   const getColor = (s: number) => {
     if (s <= 30) return "#10b981"; // Emerald Clean
-    if (s <= 60) return "#f59e0b"; // Warning Gold
+    if (s <= 60) return "#f97316"; // Warning Orange
     return "#ef4444"; // Danger Crimson
   };
 
   const strokeColor = getColor(score);
 
   return (
-    <div className="flex flex-col items-center w-full px-4">
+    <div className="flex flex-col items-center w-full px-4 font-mono">
       <div className="relative w-48 h-28 flex justify-center overflow-hidden">
         <svg viewBox="0 0 200 120" className="w-full h-full">
           {/* Background Arc */}
           <path
             d={backgroundPath}
             fill="none"
-            stroke="#1e293b"
+            stroke="#27272a"
             strokeWidth="14"
             strokeLinecap="round"
           />
@@ -65,16 +65,16 @@ export function RiskGauge({ data }: RiskGaugeProps) {
         </svg>
 
         <div className="absolute bottom-1 flex flex-col items-center">
-          <span className="font-black text-3xl leading-none text-slate-100 font-mono">
+          <span className="font-cyber font-black text-3xl leading-none text-white font-mono">
             {score}
           </span>
-          <span className="text-[10px] uppercase tracking-wider font-extrabold text-slate-400 mt-1 flex items-center gap-1">
+          <span className="text-[10px] uppercase tracking-wider font-cyber font-extrabold text-slate-400 mt-1 flex items-center gap-1">
             {score > 60 ? (
-              <ShieldAlert className="w-3 h-3 text-red-400 animate-bounce" />
+              <ShieldAlert className="w-3.5 h-3.5 text-red-400 animate-bounce" />
             ) : score > 30 ? (
-              <AlertTriangle className="w-3 h-3 text-amber-400" />
+              <AlertTriangle className="w-3.5 h-3.5 text-orange-400" />
             ) : (
-              <ShieldCheck className="w-3 h-3 text-emerald-400" />
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
             )}
             <span>THREAT LEVEL</span>
           </span>
@@ -86,7 +86,7 @@ export function RiskGauge({ data }: RiskGaugeProps) {
           {data.anomalies.map((anomaly, idx) => (
             <span
               key={idx}
-              className="bg-slate-900 border border-slate-700 text-slate-200 text-[10px] px-2 py-0.5 rounded-lg font-mono font-semibold"
+              className="bg-white/10 border border-white/20 text-white text-[10px] px-2.5 py-0.5 rounded-full font-mono font-bold uppercase"
             >
               {anomaly}
             </span>

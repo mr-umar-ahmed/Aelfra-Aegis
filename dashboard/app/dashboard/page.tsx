@@ -30,7 +30,6 @@ import {
   Server,
   Radio,
   Cpu,
-  Skull,
 } from "lucide-react";
 
 const DEFAULT_WS_URL = "ws://localhost:8765";
@@ -218,7 +217,7 @@ export default function DashboardPage() {
             ? "exec spawn"
             : "net connect";
 
-        const strokeColor = isDotEnv ? "#ef4444" : "#38bdf8";
+        const strokeColor = isDotEnv ? "#ef4444" : "#ffffff";
 
         setEdges((prevEdges: EventEdge[]) => {
           if (prevEdges.some((e: EventEdge) => e.id === edgeId)) return prevEdges;
@@ -338,7 +337,7 @@ export default function DashboardPage() {
         },
         ...prev,
       ]);
-      setRiskData({ score: 45, anomalies: ["Typosquat package loaded", "Postinstall hook active"] });
+      setRiskData({ score: 45, file_opens: 1, processes_spawned: 1, network_connections: 0, anomalies: ["Typosquat package loaded", "Postinstall hook active"] });
     }
 
     if (scenario === "env_theft" || scenario === "full_chain") {
@@ -383,7 +382,7 @@ export default function DashboardPage() {
           },
           ...prev,
         ]);
-        setRiskData({ score: 95, anomalies: ["Unauthorized .env Read", "C2 Exfiltration Active", "AWS Keys Leaked"] });
+        setRiskData({ score: 95, file_opens: 2, processes_spawned: 2, network_connections: 1, anomalies: ["Unauthorized .env Read", "C2 Exfiltration Active", "AWS Keys Leaked"] });
       }, 1200);
     }
 
@@ -422,7 +421,7 @@ export default function DashboardPage() {
     setEdges([]);
     setEventLogs([]);
     setNarrations([]);
-    setRiskData({ score: 0, anomalies: ["System Monitoring Clean"] });
+    setRiskData({ score: 0, file_opens: 0, processes_spawned: 0, network_connections: 0, anomalies: ["System Monitoring Clean"] });
     setIncidents([]);
   };
 
@@ -443,531 +442,492 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="flex h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden font-sans select-none">
-      {/* ─── Left Sidebar (250px) ─── */}
-      <aside className="w-64 glass-panel flex flex-col shrink-0 border-r border-slate-800 z-20 shadow-2xl">
-        {/* App Identity */}
-        <div className="px-5 py-5 border-b border-slate-800/80">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-2xl bg-gradient-to-tr from-cyan-600 to-blue-600 shadow-lg shadow-cyan-500/30 border border-cyan-400/30">
-              <Shield className="w-6 h-6 text-white" />
+    <div className="w-screen h-screen bg-[#0b0c0f] text-white p-3 sm:p-4 flex items-center justify-center font-sans overflow-hidden select-none relative">
+      {/* Outer Frame with Thick White Container Matching Image 1 & 2 */}
+      <div className="p-2.5 sm:p-3 bg-[#e5e7eb] rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.95)] max-w-7xl w-full h-[95vh] relative overflow-hidden flex flex-col justify-between z-10">
+        
+        {/* Inner Jet Black Panel */}
+        <div className="bg-[#09090b] rounded-[2.4rem] p-4 sm:p-6 flex flex-row w-full h-full relative overflow-hidden text-white border border-white/10 gap-4">
+
+          {/* ─── Left Sidebar (250px) ─── */}
+          <aside className="w-64 bg-white/5 border border-white/10 rounded-3xl flex flex-col shrink-0 z-20 overflow-hidden backdrop-blur-xl">
+            {/* App Identity Header */}
+            <div className="p-4 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="bg-white text-black font-cyber font-black text-sm px-4 py-2 rounded-full tracking-wider shadow-md flex items-center gap-2">
+                  <Shield className="w-4 h-4 fill-current text-black" />
+                  <span>AEGIS</span>
+                  <span className="text-[9px] bg-black text-white px-1.5 py-0.5 rounded-full font-mono">v1.0</span>
+                </div>
+              </div>
+              <p className="text-[10px] text-slate-400 font-mono mt-2 pl-1">eBPF Supply Chain Defense</p>
             </div>
-            <div>
-              <h1 className="font-black text-xl tracking-wider text-slate-100 font-mono flex items-center gap-1.5">
-                AEGIS <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-400 border border-cyan-800">v1.0</span>
-              </h1>
-              <p className="text-[11px] text-slate-400 font-mono">eBPF Supply Chain Defense</p>
-            </div>
-          </div>
-        </div>
 
-        {/* Navigation Tabs */}
-        <nav className="flex-1 px-3 py-4 space-y-1.5 font-mono text-xs">
-          <button
-            onClick={() => setActiveTab("graph")}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all ${
-              activeTab === "graph"
-                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md shadow-cyan-500/10"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
-            }`}
-          >
-            <Eye className="w-4 h-4" />
-            <span>Process Graph</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("timeline")}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all ${
-              activeTab === "timeline"
-                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md shadow-cyan-500/10"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
-            }`}
-          >
-            <Activity className="w-4 h-4" />
-            <span>Incident Timeline</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("analytics")}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all ${
-              activeTab === "analytics"
-                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md shadow-cyan-500/10"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>Security Analytics</span>
-          </button>
-          <button
-            onClick={() => setActiveTab("network")}
-            className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl font-semibold transition-all ${
-              activeTab === "network"
-                ? "bg-cyan-500/15 text-cyan-400 border border-cyan-500/30 shadow-md shadow-cyan-500/10"
-                : "text-slate-400 hover:text-slate-200 hover:bg-slate-900/60"
-            }`}
-          >
-            <Network className="w-4 h-4" />
-            <span>Network Topology</span>
-          </button>
-        </nav>
-
-        {/* Risk Score Gauge */}
-        <div className="pb-4 border-t border-slate-800/80 pt-3">
-          <RiskGauge data={riskData} />
-        </div>
-
-        {/* Sidebar Footer */}
-        <div className="px-4 py-3.5 border-t border-slate-800/80 text-[10px] text-slate-400 font-mono space-y-1 bg-slate-950/60">
-          <div className="flex justify-between">
-            <span>Kernel Probes:</span>
-            <span className="text-cyan-400 font-bold">openat · execve</span>
-          </div>
-          <div className="flex justify-between">
-            <span>Daemon Target:</span>
-            <span className="text-slate-200 font-mono truncate max-w-[110px]" title={wsUrl}>
-              {wsUrl}
-            </span>
-          </div>
-        </div>
-      </aside>
-
-      {/* ─── Main Content Area ─── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* ─── Top Navigation Header ─── */}
-        <header className="h-16 glass-panel border-b border-slate-800 px-6 flex items-center justify-between shrink-0 z-20">
-          {/* Left Metrics */}
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <div className="flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-cyan-400" />
-              <span className="text-slate-400">Processes:</span>
-              <span className="font-extrabold text-cyan-400 text-sm">{processCount}</span>
-            </div>
-            <span className="text-slate-800">|</span>
-            <div className="flex items-center gap-2">
-              <Flame className="w-4 h-4 text-red-400 animate-pulse" />
-              <span className="text-slate-400">Compromised:</span>
-              <span className="font-extrabold text-red-400 text-sm">{compromisedCount}</span>
-            </div>
-            <span className="text-slate-800">|</span>
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span className="text-slate-400">Killed:</span>
-              <span className="font-extrabold text-emerald-400 text-sm">{terminatedCount}</span>
-            </div>
-          </div>
-
-          {/* Center: Live Clock */}
-          <div className="text-slate-400 text-xs font-mono font-bold tracking-widest bg-slate-900/80 px-3.5 py-1.5 rounded-xl border border-slate-800 shadow-inner">
-            {clock}
-          </div>
-
-          {/* Right Action Bar */}
-          <div className="flex items-center gap-3">
-            {/* Interactive Simulation Trigger Button */}
-            <div className="relative">
+            {/* Navigation Tabs */}
+            <nav className="flex-1 px-3 py-4 space-y-2 font-mono text-xs">
               <button
-                onClick={() => setShowSimMenu(!showSimMenu)}
-                className="flex items-center gap-2 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black px-3.5 py-2 rounded-xl text-xs shadow-lg shadow-cyan-500/20 active:scale-95 transition-all font-mono"
+                onClick={() => setActiveTab("graph")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                  activeTab === "graph"
+                    ? "bg-white text-black shadow-lg"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
               >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>SIMULATE ATTACK</span>
+                <Eye className="w-4 h-4" />
+                <span>Process Graph</span>
               </button>
 
-              {showSimMenu && (
-                <div className="absolute right-0 mt-2 w-64 glass-panel border border-slate-700 rounded-2xl p-2 shadow-2xl z-50 font-mono text-xs space-y-1">
-                  <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 border-b border-slate-800 uppercase tracking-wider">
-                    Interactive In-Browser Scenarios
-                  </div>
-                  <button
-                    onClick={() => runSimulationScenario("full_chain")}
-                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-200 transition-colors flex items-center gap-2"
-                  >
-                    <Flame className="w-3.5 h-3.5 text-red-400" />
-                    <span>Run Full Attack Chain</span>
-                  </button>
-                  <button
-                    onClick={() => runSimulationScenario("env_theft")}
-                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-200 transition-colors flex items-center gap-2"
-                  >
-                    <Shield className="w-3.5 h-3.5 text-amber-400" />
-                    <span>.env Credential Theft</span>
-                  </button>
-                  <button
-                    onClick={() => runSimulationScenario("shell_spawn")}
-                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-cyan-500/20 hover:text-cyan-400 text-slate-200 transition-colors flex items-center gap-2"
-                  >
-                    <Terminal className="w-3.5 h-3.5 text-cyan-400" />
-                    <span>Reverse Shell Spawn</span>
-                  </button>
-                  <div className="border-t border-slate-800 my-1"></div>
-                  <button
-                    onClick={clearSimulation}
-                    className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-950/60 hover:text-red-300 text-slate-400 transition-colors flex items-center gap-2"
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Reset Canvas & State</span>
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => setActiveTab("timeline")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                  activeTab === "timeline"
+                    ? "bg-white text-black shadow-lg"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Activity className="w-4 h-4" />
+                <span>Incident Timeline</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("analytics")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                  activeTab === "analytics"
+                    ? "bg-white text-black shadow-lg"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Security Analytics</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("network")}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                  activeTab === "network"
+                    ? "bg-white text-black shadow-lg"
+                    : "text-slate-400 hover:text-white hover:bg-white/10"
+                }`}
+              >
+                <Network className="w-4 h-4" />
+                <span>Network Topology</span>
+              </button>
+            </nav>
+
+            {/* Risk Score Gauge */}
+            <div className="pb-3 border-t border-white/10 pt-2">
+              <RiskGauge data={riskData} />
             </div>
 
-            {/* Daemon Settings & Help Modals */}
-            <button
-              onClick={() => setShowSettingsModal(true)}
-              className="p-2 bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-800 rounded-xl transition-all"
-              title="WebSocket Connection Settings"
-            >
-              <Settings className="w-4 h-4" />
-            </button>
-
-            <button
-              onClick={() => setShowHelpModal(true)}
-              className="p-2 bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-slate-800 rounded-xl transition-all"
-              title="How to Run Locally"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </button>
-
-            {/* Export HTML Report */}
-            <button
-              onClick={() => exportReportToHTML(incidents)}
-              className="flex items-center gap-1.5 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 px-3 py-2 rounded-xl text-xs font-mono font-bold transition-all"
-            >
-              <Download className="w-3.5 h-3.5 text-cyan-400" />
-              <span>REPORT</span>
-            </button>
-
-            {/* Connection Pill */}
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-800 bg-slate-900/90 font-mono text-xs">
-              <Radio className={`w-3.5 h-3.5 ${connectionStatus === "connected" ? "text-emerald-400 animate-pulse" : "text-amber-400"}`} />
-              <span className="font-bold text-slate-200 uppercase text-[10px] tracking-wider">{connectionStatus}</span>
-            </div>
-          </div>
-        </header>
-
-        {/* Critical Alert Banner */}
-        {compromisedCount > 0 && terminatedCount < compromisedCount && (
-          <div className="bg-gradient-to-r from-red-950 via-red-900 to-red-950 border-b border-red-800/80 px-6 py-2 flex items-center justify-between shrink-0 animate-pulse">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-red-200">
-              <AlertTriangle className="w-4 h-4 text-red-400" />
-              <span>SECURITY ALERT: `.env` credential theft detected! Click KILL [PID] on compromised nodes to send SIGKILL.</span>
-            </div>
-          </div>
-        )}
-
-        {/* ─── Main View Switcher ─── */}
-        <div className="flex flex-1 overflow-hidden">
-          {activeTab === "graph" && (
-            <div className="flex-1 flex flex-col min-w-0 relative">
-              {/* React Flow Graph Canvas */}
-              <div className="flex-1 m-3 bg-slate-950/60 border border-slate-800/80 rounded-2xl overflow-hidden flex flex-col relative shadow-inner">
-                {connectionStatus === "disconnected" && nodes.length === 0 && (
-                  <div className="absolute inset-0 z-40 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
-                    <Server className="w-10 h-10 text-cyan-400 animate-pulse" />
-                    <h3 className="text-base font-bold text-slate-100 font-mono">Live eBPF Daemon Offline</h3>
-                    <p className="text-xs text-slate-400 max-w-md">
-                      You are viewing the hosted dashboard at <code className="text-cyan-400">aelfra-aegis.vercel.app</code>. Click <strong className="text-cyan-400">SIMULATE ATTACK</strong> above to run an in-browser attack scenario, or connect your local daemon on <code className="text-cyan-400">ws://localhost:8765</code>.
-                    </p>
-                    <div className="flex items-center gap-3 mt-2 font-mono">
-                      <button
-                        onClick={() => runSimulationScenario("full_chain")}
-                        className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs shadow-lg shadow-cyan-500/20"
-                      >
-                        Try In-Browser Simulation
-                      </button>
-                      <button
-                        onClick={() => setShowHelpModal(true)}
-                        className="bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 font-bold px-4 py-2 rounded-xl text-xs"
-                      >
-                        How to Connect Local Daemon
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex-1 relative">
-                  <FlowGraph
-                    nodes={nodes}
-                    edges={edges}
-                    onNodesChange={onNodesChange}
-                    onEdgesChange={onEdgesChange}
-                  />
-                </div>
-                <ThreatPanel narrations={narrations} />
+            {/* Sidebar Footer */}
+            <div className="px-4 py-3 border-t border-white/10 text-[10px] text-slate-400 font-mono space-y-1 bg-black/40">
+              <div className="flex justify-between">
+                <span>Probes:</span>
+                <span className="text-white font-bold">openat · execve</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Target:</span>
+                <span className="text-slate-200 font-mono truncate max-w-[110px]" title={wsUrl}>
+                  {wsUrl}
+                </span>
               </div>
             </div>
-          )}
+          </aside>
 
-          {activeTab === "timeline" && (
-            <div className="flex-1 p-6 overflow-y-auto bg-slate-950/50 font-mono">
-              <div className="max-w-4xl mx-auto space-y-4">
-                <div className="flex items-center justify-between mb-6">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-100 uppercase tracking-wide">Incident Provenance Timeline</h2>
-                    <p className="text-xs text-slate-400">Causal audit trail of all detected supply chain attacks</p>
-                  </div>
-                  <div className="relative w-64">
-                    <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
-                    <input
-                      type="text"
-                      placeholder="Filter attack type or PID..."
-                      value={timelineSearch}
-                      onChange={(e) => setTimelineSearch(e.target.value)}
-                      className="w-full bg-slate-900 border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
-                    />
-                  </div>
+          {/* ─── Main Workspace Area ─── */}
+          <div className="flex-1 flex flex-col min-w-0">
+            {/* Top Navigation Header Bar */}
+            <header className="h-14 bg-white/5 border border-white/10 rounded-3xl px-5 flex items-center justify-between shrink-0 mb-3 font-mono text-xs backdrop-blur-xl">
+              {/* Left Live Metrics */}
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Cpu className="w-4 h-4 text-white" />
+                  <span className="text-slate-400">Processes:</span>
+                  <span className="font-cyber font-black text-white text-sm">{processCount}</span>
                 </div>
+                <span className="text-slate-700">|</span>
+                <div className="flex items-center gap-2">
+                  <Flame className="w-4 h-4 text-red-400 animate-pulse" />
+                  <span className="text-slate-400">Compromised:</span>
+                  <span className="font-cyber font-black text-red-400 text-sm">{compromisedCount}</span>
+                </div>
+                <span className="text-slate-700">|</span>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span className="text-slate-400">Killed:</span>
+                  <span className="font-cyber font-black text-emerald-400 text-sm">{terminatedCount}</span>
+                </div>
+              </div>
 
-                <div className="space-y-3">
-                  {incidents.filter(inc => 
-                    inc.attack_type.toLowerCase().includes(timelineSearch.toLowerCase()) || 
-                    inc.pid.toString().includes(timelineSearch)
-                  ).map((inc) => (
-                    <div key={inc.id} className="glass-card border border-slate-800 rounded-2xl overflow-hidden cursor-pointer hover:border-slate-700 transition-all" onClick={() => setExpandedIncident(expandedIncident === inc.id ? null : inc.id)}>
-                      <div className="flex items-center p-4 border-l-4 border-l-cyan-500">
-                        <div className="flex-1 flex items-center gap-4">
-                          <span className="bg-red-950 border border-red-800 text-red-300 text-xs font-black px-2.5 py-1 rounded-lg uppercase">{inc.attack_type}</span>
-                          <span className="text-xs font-bold text-slate-200">PID: {inc.pid}</span>
-                          <span className="text-xs text-slate-500">{new Date(inc.start_time).toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs font-extrabold text-amber-400">Risk Score: {inc.risk_score}</span>
-                          <span className={`text-xs font-bold px-2.5 py-1 rounded-lg ${inc.status === 'terminated' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'}`}>{inc.status.toUpperCase()}</span>
-                        </div>
+              {/* Center Clock */}
+              <div className="text-slate-300 font-mono font-bold tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/15">
+                {clock}
+              </div>
+
+              {/* Right Action Bar */}
+              <div className="flex items-center gap-2">
+                {/* Interactive Simulation Trigger Button */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowSimMenu(!showSimMenu)}
+                    className="flex items-center gap-2 bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-4 py-2 rounded-full text-xs shadow-lg transition-all"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-current" />
+                    <span>SIMULATE ATTACK</span>
+                  </button>
+
+                  {showSimMenu && (
+                    <div className="absolute right-0 mt-2 w-64 bg-[#0e0e11] border border-white/20 rounded-2xl p-2 shadow-2xl z-50 font-mono text-xs space-y-1">
+                      <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 border-b border-white/10 uppercase tracking-wider">
+                        Interactive In-Browser Scenarios
                       </div>
-                      
-                      {expandedIncident === inc.id && (
-                        <div className="p-4 border-t border-slate-800/80 bg-slate-950/80 text-xs space-y-2">
-                          {inc.narration_text && (
-                            <div className="p-3 bg-slate-900 border-l-2 border-cyan-500 text-slate-300 rounded-r-xl">
-                              <strong className="text-cyan-400">Intelligence Narrative:</strong> {inc.narration_text}
-                            </div>
-                          )}
-                          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider pt-2">Captured Syscall Events ({inc.events?.length || 0})</div>
-                          <div className="max-h-48 overflow-y-auto space-y-1">
-                            {inc.events?.map((e, idx) => (
-                              <div key={idx} className="flex gap-4 text-xs font-mono p-1.5 hover:bg-slate-900 rounded-lg text-slate-300 border border-transparent hover:border-slate-800">
-                                <span className="text-slate-500 w-24">{new Date(e.timestamp).toLocaleTimeString()}</span>
-                                <span className="text-cyan-400 font-bold w-24">{e.event_type}</span>
-                                <span className="text-slate-200 flex-1 truncate">{e.filename || e.comm}</span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {incidents.length === 0 && (
-                    <div className="text-center py-12 text-slate-500 text-xs">
-                      No incident timeline records captured yet. Run a simulation or connect local daemon to capture events.
+                      <button
+                        onClick={() => runSimulationScenario("full_chain")}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                      >
+                        <Flame className="w-3.5 h-3.5 text-red-400" />
+                        <span>Run Full Attack Chain</span>
+                      </button>
+                      <button
+                        onClick={() => runSimulationScenario("env_theft")}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                      >
+                        <Shield className="w-3.5 h-3.5 text-orange-400" />
+                        <span>.env Credential Theft</span>
+                      </button>
+                      <button
+                        onClick={() => runSimulationScenario("shell_spawn")}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                      >
+                        <Terminal className="w-3.5 h-3.5 text-white" />
+                        <span>Reverse Shell Spawn</span>
+                      </button>
+                      <div className="border-t border-white/10 my-1"></div>
+                      <button
+                        onClick={clearSimulation}
+                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-950/60 hover:text-red-300 text-slate-400 transition-colors flex items-center gap-2"
+                      >
+                        <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                        <span>Reset Canvas & State</span>
+                      </button>
                     </div>
                   )}
                 </div>
+
+                <button
+                  onClick={() => setShowSettingsModal(true)}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
+                  title="Settings"
+                >
+                  <Settings className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => setShowHelpModal(true)}
+                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
+                  title="Guide"
+                >
+                  <HelpCircle className="w-4 h-4" />
+                </button>
+
+                <button
+                  onClick={() => exportReportToHTML(incidents)}
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white px-3.5 py-2 rounded-full font-cyber font-bold transition-all text-xs"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>REPORT</span>
+                </button>
+
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/5 font-mono text-xs">
+                  <Radio className={`w-3.5 h-3.5 ${connectionStatus === "connected" ? "text-emerald-400 animate-pulse" : "text-amber-400"}`} />
+                  <span className="font-bold text-slate-200 uppercase text-[10px] tracking-wider">{connectionStatus}</span>
+                </div>
               </div>
-            </div>
-          )}
+            </header>
 
-          {activeTab === "analytics" && (
-            <div className="flex-1 p-6 overflow-y-auto bg-slate-950/60 font-mono">
-              <div className="max-w-4xl mx-auto space-y-6">
-                <div>
-                  <h2 className="text-lg font-black text-slate-100 uppercase tracking-wide">Security Analytics & Metrics</h2>
-                  <p className="text-xs text-slate-400">Kernel event breakdown and threat metrics</p>
+            {/* Critical Alert Banner */}
+            {compromisedCount > 0 && terminatedCount < compromisedCount && (
+              <div className="bg-red-950/80 border border-red-800 px-5 py-2 rounded-2xl flex items-center justify-between mb-3 animate-pulse font-mono text-xs text-red-200 font-bold">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <span>SECURITY ALERT: `.env` credential theft detected! Click KILL [PID] on compromised nodes.</span>
                 </div>
+              </div>
+            )}
 
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="glass-card p-4 rounded-2xl border border-slate-800">
-                    <p className="text-xs text-slate-400 font-bold">Total Syscalls Captured</p>
-                    <p className="text-3xl font-black text-cyan-400 mt-2">{eventLogs.length}</p>
-                  </div>
-                  <div className="glass-card p-4 rounded-2xl border border-slate-800">
-                    <p className="text-xs text-slate-400 font-bold">Compromised PIDs</p>
-                    <p className="text-3xl font-black text-red-400 mt-2">{compromisedCount}</p>
-                  </div>
-                  <div className="glass-card p-4 rounded-2xl border border-slate-800">
-                    <p className="text-xs text-slate-400 font-bold">Terminated PIDs</p>
-                    <p className="text-3xl font-black text-emerald-400 mt-2">{terminatedCount}</p>
-                  </div>
-                </div>
-
-                <div className="glass-card p-5 rounded-2xl border border-slate-800 space-y-3">
-                  <h3 className="text-sm font-bold text-slate-200 uppercase tracking-wider">Syscall Distribution</h3>
-                  <div className="space-y-2 text-xs">
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-slate-400">openat (.env & file reads)</span>
-                        <span className="text-cyan-400 font-bold">{eventLogs.filter(e => e.event_type === "file_open").length}</span>
+            {/* ─── Main View Switcher ─── */}
+            <div className="flex flex-1 overflow-hidden gap-3">
+              {activeTab === "graph" && (
+                <div className="flex-1 flex flex-col min-w-0 relative">
+                  <div className="flex-1 bg-black/60 border border-white/10 rounded-3xl overflow-hidden flex flex-col relative shadow-2xl">
+                    {connectionStatus === "disconnected" && nodes.length === 0 && (
+                      <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
+                        <Server className="w-10 h-10 text-white animate-pulse" />
+                        <h3 className="text-base font-cyber font-black text-white uppercase">Live eBPF Daemon Offline</h3>
+                        <p className="text-xs text-slate-300 max-w-md font-sans">
+                          You are viewing the hosted dashboard. Click <strong className="text-white">SIMULATE ATTACK</strong> above to run an in-browser attack scenario, or connect your local daemon on <code className="text-white">ws://localhost:8765</code>.
+                        </p>
+                        <div className="flex items-center gap-3 mt-2 font-mono">
+                          <button
+                            onClick={() => runSimulationScenario("full_chain")}
+                            className="bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-5 py-2.5 rounded-full text-xs shadow-lg transition-all"
+                          >
+                            Try In-Browser Simulation
+                          </button>
+                          <button
+                            onClick={() => setShowHelpModal(true)}
+                            className="bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-mono font-bold px-4 py-2.5 rounded-full text-xs transition-all"
+                          >
+                            How to Connect Local Daemon
+                          </button>
+                        </div>
                       </div>
-                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                        <div className="bg-cyan-500 h-full" style={{ width: `${Math.min((eventLogs.filter(e => e.event_type === "file_open").length / (eventLogs.length || 1)) * 100, 100)}%` }} />
+                    )}
+
+                    <div className="flex-1 relative">
+                      <FlowGraph
+                        nodes={nodes}
+                        edges={edges}
+                        onNodesChange={onNodesChange}
+                        onEdgesChange={onEdgesChange}
+                      />
+                    </div>
+                    <ThreatPanel narrations={narrations} />
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "timeline" && (
+                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono">
+                  <div className="max-w-4xl mx-auto space-y-4">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Incident Provenance Timeline</h2>
+                        <p className="text-xs text-slate-400 font-sans">Causal audit trail of all detected supply chain attacks</p>
+                      </div>
+                      <div className="relative w-64">
+                        <Search className="w-4 h-4 text-slate-500 absolute left-3 top-2.5" />
+                        <input
+                          type="text"
+                          placeholder="Filter attack type or PID..."
+                          value={timelineSearch}
+                          onChange={(e) => setTimelineSearch(e.target.value)}
+                          className="w-full bg-white/5 border border-white/20 rounded-2xl pl-9 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-white"
+                        />
                       </div>
                     </div>
 
+                    <div className="space-y-3">
+                      {incidents.filter(inc => 
+                        inc.attack_type.toLowerCase().includes(timelineSearch.toLowerCase()) || 
+                        inc.pid.toString().includes(timelineSearch)
+                      ).map((inc) => (
+                        <div key={inc.id} className="glass-card border border-white/10 rounded-2xl overflow-hidden cursor-pointer hover:border-white/40 transition-all" onClick={() => setExpandedIncident(expandedIncident === inc.id ? null : inc.id)}>
+                          <div className="flex items-center p-4 border-l-4 border-l-white">
+                            <div className="flex-1 flex items-center gap-4">
+                              <span className="bg-red-950 border border-red-800 text-red-300 text-xs font-cyber font-black px-3 py-1 rounded-full uppercase">{inc.attack_type}</span>
+                              <span className="text-xs font-bold text-white">PID: {inc.pid}</span>
+                              <span className="text-xs text-slate-400">{new Date(inc.start_time).toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-xs font-cyber font-bold text-orange-400">Risk Score: {inc.risk_score}</span>
+                              <span className={`text-xs font-bold px-3 py-1 rounded-full ${inc.status === 'terminated' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-red-950 text-red-400 border border-red-800'}`}>{inc.status.toUpperCase()}</span>
+                            </div>
+                          </div>
+                          
+                          {expandedIncident === inc.id && (
+                            <div className="p-4 border-t border-white/10 bg-black/80 text-xs space-y-2">
+                              {inc.narration_text && (
+                                <div className="p-3 bg-white/5 border-l-2 border-white text-slate-200 rounded-r-xl">
+                                  <strong className="text-white font-cyber">Intelligence Narrative:</strong> {inc.narration_text}
+                                </div>
+                              )}
+                              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider pt-2">Captured Syscall Events ({inc.events?.length || 0})</div>
+                              <div className="max-h-48 overflow-y-auto space-y-1">
+                                {inc.events?.map((e, idx) => (
+                                  <div key={idx} className="flex gap-4 text-xs font-mono p-1.5 hover:bg-white/10 rounded-lg text-slate-300">
+                                    <span className="text-slate-400 w-24">{new Date(e.timestamp).toLocaleTimeString()}</span>
+                                    <span className="text-white font-bold w-24">{e.event_type}</span>
+                                    <span className="text-slate-200 flex-1 truncate">{e.filename || e.comm}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === "analytics" && (
+                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono">
+                  <div className="max-w-4xl mx-auto space-y-6">
                     <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-slate-400">execve (process spawns)</span>
-                        <span className="text-amber-400 font-bold">{eventLogs.filter(e => e.event_type === "exec_spawn").length}</span>
-                      </div>
-                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                        <div className="bg-amber-500 h-full" style={{ width: `${Math.min((eventLogs.filter(e => e.event_type === "exec_spawn").length / (eventLogs.length || 1)) * 100, 100)}%` }} />
-                      </div>
+                      <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Security Analytics & Metrics</h2>
+                      <p className="text-xs text-slate-400 font-sans">Kernel event breakdown and threat metrics</p>
                     </div>
 
-                    <div>
-                      <div className="flex justify-between mb-1">
-                        <span className="text-slate-400">connect (network exfiltration)</span>
-                        <span className="text-red-400 font-bold">{eventLogs.filter(e => e.event_type === "network" || e.event_type === "net_connect").length}</span>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="glass-card p-4 rounded-2xl border border-white/10">
+                        <p className="text-xs text-slate-400 font-bold">Total Syscalls Captured</p>
+                        <p className="text-3xl font-cyber font-black text-white mt-2">{eventLogs.length}</p>
                       </div>
-                      <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden">
-                        <div className="bg-red-500 h-full" style={{ width: `${Math.min((eventLogs.filter(e => e.event_type === "network" || e.event_type === "net_connect").length / (eventLogs.length || 1)) * 100, 100)}%` }} />
+                      <div className="glass-card p-4 rounded-2xl border border-white/10">
+                        <p className="text-xs text-slate-400 font-bold">Compromised PIDs</p>
+                        <p className="text-3xl font-cyber font-black text-red-400 mt-2">{compromisedCount}</p>
+                      </div>
+                      <div className="glass-card p-4 rounded-2xl border border-white/10">
+                        <p className="text-xs text-slate-400 font-bold">Terminated PIDs</p>
+                        <p className="text-3xl font-cyber font-black text-emerald-400 mt-2">{terminatedCount}</p>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          )}
+              )}
 
-          {activeTab === "network" && (
-            <div className="flex-1 p-6 overflow-y-auto bg-slate-950/60 font-mono">
-              <div className="max-w-4xl mx-auto space-y-6">
-                <div>
-                  <h2 className="text-lg font-black text-slate-100 uppercase tracking-wide">Network Connection Topology</h2>
-                  <p className="text-xs text-slate-400">Outbound socket connections and destination IP status</p>
-                </div>
+              {activeTab === "network" && (
+                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono">
+                  <div className="max-w-4xl mx-auto space-y-6">
+                    <div>
+                      <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Network Connection Topology</h2>
+                      <p className="text-xs text-slate-400 font-sans">Outbound socket connections and destination IP status</p>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                    <h3 className="text-xs font-bold text-slate-300 uppercase mb-3">Active Sockets</h3>
-                    <div className="text-3xl font-black text-cyan-400">{networkConnections}</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="glass-card p-5 rounded-2xl border border-white/10">
+                        <h3 className="text-xs font-bold text-slate-300 uppercase mb-3">Active Sockets</h3>
+                        <div className="text-3xl font-cyber font-black text-white">{networkConnections}</div>
+                      </div>
+                      <div className="glass-card p-5 rounded-2xl border border-white/10">
+                        <h3 className="text-xs font-bold text-slate-300 uppercase mb-3">Suspicious Endpoints</h3>
+                        <div className="text-3xl font-cyber font-black text-red-400">{threatsDetected}</div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="glass-card p-5 rounded-2xl border border-slate-800">
-                    <h3 className="text-xs font-bold text-slate-300 uppercase mb-3">Suspicious Endpoints</h3>
-                    <div className="text-3xl font-black text-red-400">{threatsDetected}</div>
+                </div>
+              )}
+
+              {/* ─── Event Stream Sidebar (310px) ─── */}
+              <div className="w-80 glass-panel border border-white/10 rounded-3xl flex flex-col shrink-0 overflow-hidden">
+                {/* Sidebar Header */}
+                <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-white/5 font-mono">
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-orange-500" />
+                    <span className="text-xs font-cyber font-bold text-white uppercase tracking-wider">Live Event Stream</span>
                   </div>
+                  <span className="text-[10px] bg-white/10 border border-white/20 px-2 py-0.5 rounded-full text-white font-bold font-mono">
+                    {filteredLogs.length} live
+                  </span>
                 </div>
-              </div>
-            </div>
-          )}
 
-          {/* ─── Event Stream Sidebar (320px) ─── */}
-          <div className="w-80 glass-panel border-l border-slate-800/80 flex flex-col shrink-0">
-            {/* Sidebar Header */}
-            <div className="px-4 py-3.5 border-b border-slate-800/80 flex items-center justify-between bg-slate-900/40 font-mono">
-              <div className="flex items-center gap-2">
-                <Zap className="w-4 h-4 text-cyan-400" />
-                <span className="text-xs font-bold text-slate-200 uppercase tracking-wider">Live Event Stream</span>
-              </div>
-              <span className="text-[10px] bg-slate-800 border border-slate-700 px-2 py-0.5 rounded-full text-cyan-400 font-bold font-mono">
-                {filteredLogs.length} events
-              </span>
-            </div>
+                {/* Search & Filter */}
+                <div className="p-3 border-b border-white/10 space-y-2 bg-black/40">
+                  <div className="relative font-mono">
+                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Search PID, comm, path..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full bg-white/5 border border-white/20 rounded-2xl pl-8 pr-3 py-1.5 text-xs text-white focus:outline-none focus:border-white"
+                    />
+                  </div>
 
-            {/* Search & Filter */}
-            <div className="p-3 border-b border-slate-800/80 space-y-2 bg-slate-950/40">
-              <div className="relative font-mono">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  placeholder="Search PID, comm, path..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500"
-                />
-              </div>
-
-              <div className="flex items-center gap-1 text-[10px] font-mono">
-                <Filter className="w-3 h-3 text-slate-500" />
-                {["all", "critical", "high", "medium"].map((sev) => (
-                  <button
-                    key={sev}
-                    onClick={() => setFilterSeverity(sev)}
-                    className={`px-2 py-0.5 rounded-lg uppercase font-bold transition-colors ${
-                      filterSeverity === sev
-                        ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/40"
-                        : "text-slate-500 hover:text-slate-300"
-                    }`}
-                  >
-                    {sev}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Event Feed List */}
-            <div className="flex-1 overflow-y-auto p-3 space-y-2 text-xs font-mono">
-              {filteredLogs.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2">
-                  <Terminal className="w-6 h-6 text-slate-700" />
-                  <p className="text-center text-xs text-slate-500">Awaiting kernel events...</p>
-                </div>
-              ) : (
-                filteredLogs.map((evt: KernelEvent, idx: number) => (
-                  <div
-                    key={idx}
-                    className={`p-3 rounded-xl border text-xs transition-all glass-card ${
-                      evt.severity === "critical"
-                        ? "border-red-500/60 bg-red-950/20 text-red-200"
-                        : evt.severity === "high"
-                        ? "border-orange-500/60 bg-orange-950/20 text-orange-200"
-                        : "border-slate-800 bg-slate-900/60 text-slate-300"
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1 font-bold">
-                      <span
-                        className={`uppercase text-[10px] tracking-wider px-2 py-0.5 rounded-md font-extrabold ${
-                          evt.severity === "critical"
-                            ? "bg-red-900/80 text-red-300 border border-red-700"
-                            : evt.severity === "high"
-                            ? "bg-orange-900/80 text-orange-300 border border-orange-700"
-                            : "bg-slate-800 text-cyan-400 border border-slate-700"
+                  <div className="flex items-center gap-1 text-[10px] font-mono">
+                    <Filter className="w-3 h-3 text-slate-500" />
+                    {["all", "critical", "high", "medium"].map((sev) => (
+                      <button
+                        key={sev}
+                        onClick={() => setFilterSeverity(sev)}
+                        className={`px-2 py-0.5 rounded-full uppercase font-bold transition-colors ${
+                          filterSeverity === sev
+                            ? "bg-white text-black shadow-sm"
+                            : "text-slate-400 hover:text-white"
                         }`}
                       >
-                        {evt.event_type}
-                      </span>
-                      <span className="text-[10px] text-slate-400">PID {evt.pid}</span>
-                    </div>
-
-                    <div className="truncate text-slate-200 font-medium my-1" title={evt.filename}>
-                      {evt.filename}
-                    </div>
-
-                    <div className="text-[10px] text-slate-500 flex justify-between pt-1 border-t border-slate-800/60">
-                      <span>comm: <strong className="text-slate-300">{evt.comm}</strong></span>
-                      <span>{new Date(evt.timestamp).toLocaleTimeString()}</span>
-                    </div>
+                        {sev}
+                      </button>
+                    ))}
                   </div>
-                ))
-              )}
+                </div>
+
+                {/* Event Feed List */}
+                <div className="flex-1 overflow-y-auto p-3 space-y-2 text-xs font-mono">
+                  {filteredLogs.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-500 gap-2">
+                      <Terminal className="w-6 h-6 text-slate-600" />
+                      <p className="text-center text-xs text-slate-400">Awaiting kernel events...</p>
+                    </div>
+                  ) : (
+                    filteredLogs.map((evt: KernelEvent, idx: number) => (
+                      <div
+                        key={idx}
+                        className={`p-3 rounded-2xl border text-xs transition-all glass-card ${
+                          evt.severity === "critical"
+                            ? "border-red-500/80 bg-red-950/30 text-red-200"
+                            : evt.severity === "high"
+                            ? "border-orange-500/80 bg-orange-950/30 text-orange-200"
+                            : "border-white/10 bg-black/60 text-slate-300"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-1 font-bold">
+                          <span
+                            className={`uppercase text-[9px] tracking-wider px-2 py-0.5 rounded-full font-cyber font-black ${
+                              evt.severity === "critical"
+                                ? "bg-red-900/80 text-red-300 border border-red-700"
+                                : evt.severity === "high"
+                                ? "bg-orange-900/80 text-orange-300 border border-orange-700"
+                                : "bg-white/10 text-white border border-white/20"
+                            }`}
+                          >
+                            {evt.event_type}
+                          </span>
+                          <span className="text-[10px] text-slate-400">PID {evt.pid}</span>
+                        </div>
+
+                        <div className="truncate text-white font-medium my-1" title={evt.filename}>
+                          {evt.filename}
+                        </div>
+
+                        <div className="text-[10px] text-slate-400 flex justify-between pt-1 border-t border-white/10">
+                          <span>comm: <strong className="text-white">{evt.comm}</strong></span>
+                          <span>{new Date(evt.timestamp).toLocaleTimeString()}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ─── WebSocket Daemon Settings Modal ─── */}
+      {/* ─── Daemon Settings Modal ─── */}
       {showSettingsModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel border border-slate-700 rounded-3xl p-6 max-w-md w-full font-mono text-xs space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-100">
-                <Settings className="w-4 h-4 text-cyan-400" />
-                <span>eBPF Daemon Connection</span>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0e0e11] border border-white/20 rounded-3xl p-6 max-w-md w-full font-mono text-xs space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2 text-sm font-cyber font-bold text-white uppercase">
+                <Settings className="w-4 h-4" />
+                <span>Daemon Connection</span>
               </div>
-              <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-slate-100">
+              <button onClick={() => setShowSettingsModal(false)} className="text-slate-400 hover:text-white">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <div className="space-y-2">
-              <label className="text-slate-400 font-bold block">WebSocket Target Address:</label>
+              <label className="text-slate-400 font-bold block">WebSocket Address:</label>
               <input
                 type="text"
                 value={customWsUrl}
                 onChange={(e) => setCustomWsUrl(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-slate-200 focus:outline-none focus:border-cyan-500 font-mono"
+                className="w-full bg-white/5 border border-white/20 rounded-2xl p-3 text-white focus:outline-none focus:border-white font-mono"
                 placeholder="ws://localhost:8765"
               />
-              <p className="text-[11px] text-slate-500">
-                Default: <code className="text-cyan-400">ws://localhost:8765</code> (local eBPF daemon)
-              </p>
             </div>
 
             <div className="flex justify-end gap-2 pt-2">
@@ -976,7 +936,7 @@ export default function DashboardPage() {
                   setWsUrl(customWsUrl);
                   setShowSettingsModal(false);
                 }}
-                className="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black px-4 py-2 rounded-xl text-xs"
+                className="bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-5 py-2.5 rounded-full text-xs shadow-lg transition-all"
               >
                 Save & Connect
               </button>
@@ -985,39 +945,35 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* ─── How to Run Locally Help Modal ─── */}
+      {/* ─── Guide Modal ─── */}
       {showHelpModal && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-panel border border-slate-700 rounded-3xl p-6 max-w-lg w-full font-mono text-xs space-y-4 shadow-2xl">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2 text-sm font-bold text-slate-100">
-                <HelpCircle className="w-4 h-4 text-cyan-400" />
-                <span>How to Run Simulation Locally</span>
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0e0e11] border border-white/20 rounded-3xl p-6 max-w-lg w-full font-mono text-xs space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <div className="flex items-center gap-2 text-sm font-cyber font-bold text-white uppercase">
+                <HelpCircle className="w-4 h-4" />
+                <span>How to Run Simulation</span>
               </div>
-              <button onClick={() => setShowHelpModal(false)} className="text-slate-400 hover:text-slate-100">
+              <button onClick={() => setShowHelpModal(false)} className="text-slate-400 hover:text-white">
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="space-y-3 text-slate-300 leading-relaxed font-sans">
-              <p className="text-xs">
-                Follow these 3 terminal steps to test the real-time attack simulator and eBPF kernel probes locally:
-              </p>
-
+            <div className="space-y-3 text-slate-300 font-sans leading-relaxed text-xs">
+              <p>Run these 3 terminals locally to test the eBPF kernel detector:</p>
               <div className="space-y-2 font-mono text-[11px]">
-                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                  <div className="text-cyan-400 font-bold mb-1">Terminal 1: C2 Exfil Listener</div>
+                <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
+                  <div className="text-white font-bold mb-1 font-cyber">1. C2 Exfil Listener</div>
                   <code>python simulator/listener.py</code>
                 </div>
 
-                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                  <div className="text-cyan-400 font-bold mb-1">Terminal 2: eBPF Daemon (Root/WS)</div>
+                <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
+                  <div className="text-white font-bold mb-1 font-cyber">2. eBPF Daemon (Root)</div>
                   <code>sudo python3 ebpf/daemon.py</code>
-                  <div className="text-[10px] text-slate-500 mt-1">(Use `python ebpf/daemon.py` on Windows for Mock Mode)</div>
                 </div>
 
-                <div className="bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-                  <div className="text-cyan-400 font-bold mb-1">Terminal 3: Trigger Supply Chain Attack</div>
+                <div className="bg-white/5 p-3 rounded-2xl border border-white/10">
+                  <div className="text-white font-bold mb-1 font-cyber">3. Trigger Attack</div>
                   <code>cd simulator/target-app && npm install --foreground-scripts</code>
                 </div>
               </div>
@@ -1026,7 +982,7 @@ export default function DashboardPage() {
             <div className="flex justify-end pt-2">
               <button
                 onClick={() => setShowHelpModal(false)}
-                className="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold px-4 py-2 rounded-xl text-xs"
+                className="bg-white text-black font-cyber font-bold px-5 py-2.5 rounded-full text-xs"
               >
                 Close Guide
               </button>
