@@ -1,11 +1,11 @@
 import { ProcessNode, EventEdge } from "./types";
 
 /**
- * Positions graph nodes in a clean horizontal hierarchy (Left-to-Right layout)
+ * Positions graph nodes in a clean, spacious horizontal hierarchy (Left-to-Right layout)
+ * with generous vertical and horizontal spacing to prevent congestion.
  */
 export function autoLayoutNodes(nodes: ProcessNode[], edges: EventEdge[]): ProcessNode[] {
   const levels: Record<number, string[]> = {};
-  const visited = new Set<string>();
 
   // Map children relationships
   const parents: Record<string, string> = {};
@@ -27,8 +27,8 @@ export function autoLayoutNodes(nodes: ProcessNode[], edges: EventEdge[]): Proce
     levels[depth].push(node.id);
   });
 
-  const nodeWidth = 240;
-  const nodeHeight = 120;
+  const nodeWidth = 320;  // Generous horizontal spacing
+  const nodeHeight = 200; // Generous vertical spacing
 
   return nodes.map((node) => {
     let depth = 0;
@@ -45,8 +45,8 @@ export function autoLayoutNodes(nodes: ProcessNode[], edges: EventEdge[]): Proce
     return {
       ...node,
       position: {
-        x: 80 + depth * nodeWidth,
-        y: 100 + indexInLevel * nodeHeight,
+        x: 100 + depth * nodeWidth,
+        y: 80 + indexInLevel * nodeHeight,
       },
     };
   });

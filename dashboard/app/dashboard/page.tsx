@@ -442,32 +442,32 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="w-screen h-screen bg-[#0b0c0f] text-white p-3 sm:p-4 flex items-center justify-center font-sans overflow-hidden select-none relative">
-      {/* Outer Frame with Thick White Container Matching Image 1 & 2 */}
-      <div className="p-2.5 sm:p-3 bg-[#e5e7eb] rounded-[3rem] shadow-[0_0_100px_rgba(0,0,0,0.95)] max-w-7xl w-full h-[95vh] relative overflow-hidden flex flex-col justify-between z-10">
+    <div className="w-screen h-screen bg-[#0b0c0f] text-white p-2 sm:p-3 flex items-center justify-center font-sans overflow-hidden select-none relative">
+      {/* Outer Spacious Frame with Thick White Container (Matching Image 1 & 2) */}
+      <div className="p-2 sm:p-2.5 bg-[#e5e7eb] rounded-[2.8rem] shadow-[0_0_100px_rgba(0,0,0,0.95)] w-full max-w-[99vw] h-[98vh] relative overflow-hidden flex flex-col justify-between z-10">
         
         {/* Inner Jet Black Panel */}
-        <div className="bg-[#09090b] rounded-[2.4rem] p-4 sm:p-6 flex flex-row w-full h-full relative overflow-hidden text-white border border-white/10 gap-4">
+        <div className="bg-[#09090b] rounded-[2.3rem] p-3 sm:p-4 flex flex-row w-full h-full relative overflow-hidden text-white border border-white/10 gap-3">
 
-          {/* ─── Left Sidebar (250px) ─── */}
-          <aside className="w-64 bg-white/5 border border-white/10 rounded-3xl flex flex-col shrink-0 z-20 overflow-hidden backdrop-blur-xl">
+          {/* ─── Column 1: Left Sidebar (240px) ─── */}
+          <aside className="w-60 bg-white/5 border border-white/10 rounded-3xl flex flex-col shrink-0 z-20 overflow-hidden backdrop-blur-xl">
             {/* App Identity Header */}
-            <div className="p-4 border-b border-white/10">
-              <div className="flex items-center gap-3">
-                <div className="bg-white text-black font-cyber font-black text-sm px-4 py-2 rounded-full tracking-wider shadow-md flex items-center gap-2">
-                  <Shield className="w-4 h-4 fill-current text-black" />
+            <div className="p-3.5 border-b border-white/10">
+              <div className="flex items-center gap-2">
+                <div className="bg-white text-black font-cyber font-black text-xs px-3.5 py-1.5 rounded-full tracking-wider shadow-md flex items-center gap-1.5">
+                  <Shield className="w-3.5 h-3.5 fill-current text-black" />
                   <span>AEGIS</span>
-                  <span className="text-[9px] bg-black text-white px-1.5 py-0.5 rounded-full font-mono">v1.0</span>
+                  <span className="text-[8px] bg-black text-white px-1.5 py-0.5 rounded-full font-mono">v1.0</span>
                 </div>
               </div>
-              <p className="text-[10px] text-slate-400 font-mono mt-2 pl-1">eBPF Supply Chain Defense</p>
+              <p className="text-[9px] text-slate-400 font-mono mt-1.5 pl-1">eBPF Supply Chain Defense</p>
             </div>
 
             {/* Navigation Tabs */}
-            <nav className="flex-1 px-3 py-4 space-y-2 font-mono text-xs">
+            <nav className="flex-1 px-2.5 py-3 space-y-1.5 font-mono text-xs">
               <button
                 onClick={() => setActiveTab("graph")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "graph"
                     ? "bg-white text-black shadow-lg"
                     : "text-slate-400 hover:text-white hover:bg-white/10"
@@ -479,7 +479,7 @@ export default function DashboardPage() {
 
               <button
                 onClick={() => setActiveTab("timeline")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "timeline"
                     ? "bg-white text-black shadow-lg"
                     : "text-slate-400 hover:text-white hover:bg-white/10"
@@ -491,7 +491,7 @@ export default function DashboardPage() {
 
               <button
                 onClick={() => setActiveTab("analytics")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "analytics"
                     ? "bg-white text-black shadow-lg"
                     : "text-slate-400 hover:text-white hover:bg-white/10"
@@ -503,7 +503,7 @@ export default function DashboardPage() {
 
               <button
                 onClick={() => setActiveTab("network")}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl font-cyber font-bold transition-all ${
+                className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-2xl font-cyber font-bold transition-all ${
                   activeTab === "network"
                     ? "bg-white text-black shadow-lg"
                     : "text-slate-400 hover:text-white hover:bg-white/10"
@@ -515,19 +515,19 @@ export default function DashboardPage() {
             </nav>
 
             {/* Risk Score Gauge */}
-            <div className="pb-3 border-t border-white/10 pt-2">
+            <div className="pb-2 border-t border-white/10 pt-2">
               <RiskGauge data={riskData} />
             </div>
 
             {/* Sidebar Footer */}
-            <div className="px-4 py-3 border-t border-white/10 text-[10px] text-slate-400 font-mono space-y-1 bg-black/40">
+            <div className="px-3.5 py-2.5 border-t border-white/10 text-[9px] text-slate-400 font-mono space-y-1 bg-black/40">
               <div className="flex justify-between">
                 <span>Probes:</span>
                 <span className="text-white font-bold">openat · execve</span>
               </div>
               <div className="flex justify-between">
                 <span>Target:</span>
-                <span className="text-slate-200 font-mono truncate max-w-[110px]" title={wsUrl}>
+                <span className="text-slate-200 font-mono truncate max-w-[100px]" title={wsUrl}>
                   {wsUrl}
                 </span>
               </div>
@@ -537,40 +537,39 @@ export default function DashboardPage() {
           {/* ─── Main Workspace Area ─── */}
           <div className="flex-1 flex flex-col min-w-0">
             {/* Top Navigation Header Bar */}
-            <header className="h-14 bg-white/5 border border-white/10 rounded-3xl px-5 flex items-center justify-between shrink-0 mb-3 font-mono text-xs backdrop-blur-xl">
+            <header className="h-13 bg-white/5 border border-white/10 rounded-2xl px-4 flex items-center justify-between shrink-0 mb-2.5 font-mono text-xs backdrop-blur-xl py-2">
               {/* Left Live Metrics */}
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Cpu className="w-4 h-4 text-white" />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <Cpu className="w-3.5 h-3.5 text-white" />
                   <span className="text-slate-400">Processes:</span>
-                  <span className="font-cyber font-black text-white text-sm">{processCount}</span>
+                  <span className="font-cyber font-black text-white text-xs">{processCount}</span>
                 </div>
                 <span className="text-slate-700">|</span>
-                <div className="flex items-center gap-2">
-                  <Flame className="w-4 h-4 text-red-400 animate-pulse" />
+                <div className="flex items-center gap-1.5">
+                  <Flame className="w-3.5 h-3.5 text-red-400 animate-pulse" />
                   <span className="text-slate-400">Compromised:</span>
-                  <span className="font-cyber font-black text-red-400 text-sm">{compromisedCount}</span>
+                  <span className="font-cyber font-black text-red-400 text-xs">{compromisedCount}</span>
                 </div>
                 <span className="text-slate-700">|</span>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                <div className="flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span className="text-slate-400">Killed:</span>
-                  <span className="font-cyber font-black text-emerald-400 text-sm">{terminatedCount}</span>
+                  <span className="font-cyber font-black text-emerald-400 text-xs">{terminatedCount}</span>
                 </div>
               </div>
 
               {/* Center Clock */}
-              <div className="text-slate-300 font-mono font-bold tracking-widest bg-white/10 px-3 py-1 rounded-full border border-white/15">
+              <div className="text-slate-300 font-mono font-bold tracking-widest bg-white/10 px-3 py-0.5 rounded-full border border-white/15 text-[11px]">
                 {clock}
               </div>
 
               {/* Right Action Bar */}
               <div className="flex items-center gap-2">
-                {/* Interactive Simulation Trigger Button */}
                 <div className="relative">
                   <button
                     onClick={() => setShowSimMenu(!showSimMenu)}
-                    className="flex items-center gap-2 bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-4 py-2 rounded-full text-xs shadow-lg transition-all"
+                    className="flex items-center gap-2 bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-4 py-1.5 rounded-full text-xs shadow-lg transition-all"
                   >
                     <Play className="w-3.5 h-3.5 fill-current" />
                     <span>SIMULATE ATTACK</span>
@@ -616,38 +615,38 @@ export default function DashboardPage() {
 
                 <button
                   onClick={() => setShowSettingsModal(true)}
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
                   title="Settings"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={() => setShowHelpModal(true)}
-                  className="w-9 h-9 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
+                  className="w-8 h-8 rounded-full bg-white/10 hover:bg-white hover:text-black border border-white/20 flex items-center justify-center transition-all"
                   title="Guide"
                 >
-                  <HelpCircle className="w-4 h-4" />
+                  <HelpCircle className="w-3.5 h-3.5" />
                 </button>
 
                 <button
                   onClick={() => exportReportToHTML(incidents)}
-                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white px-3.5 py-2 rounded-full font-cyber font-bold transition-all text-xs"
+                  className="flex items-center gap-1.5 bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white px-3 py-1.5 rounded-full font-cyber font-bold transition-all text-xs"
                 >
                   <Download className="w-3.5 h-3.5" />
                   <span>REPORT</span>
                 </button>
 
-                <div className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/20 bg-white/5 font-mono text-xs">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/20 bg-white/5 font-mono text-xs">
                   <Radio className={`w-3.5 h-3.5 ${connectionStatus === "connected" ? "text-emerald-400 animate-pulse" : "text-amber-400"}`} />
-                  <span className="font-bold text-slate-200 uppercase text-[10px] tracking-wider">{connectionStatus}</span>
+                  <span className="font-bold text-slate-200 uppercase text-[9px] tracking-wider">{connectionStatus}</span>
                 </div>
               </div>
             </header>
 
             {/* Critical Alert Banner */}
             {compromisedCount > 0 && terminatedCount < compromisedCount && (
-              <div className="bg-red-950/80 border border-red-800 px-5 py-2 rounded-2xl flex items-center justify-between mb-3 animate-pulse font-mono text-xs text-red-200 font-bold">
+              <div className="bg-red-950/80 border border-red-800 px-4 py-1.5 rounded-2xl flex items-center justify-between mb-2.5 animate-pulse font-mono text-xs text-red-200 font-bold">
                 <div className="flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-red-400" />
                   <span>SECURITY ALERT: `.env` credential theft detected! Click KILL [PID] on compromised nodes.</span>
@@ -658,47 +657,54 @@ export default function DashboardPage() {
             {/* ─── Main View Switcher ─── */}
             <div className="flex flex-1 overflow-hidden gap-3">
               {activeTab === "graph" && (
-                <div className="flex-1 flex flex-col min-w-0 relative">
-                  <div className="flex-1 bg-black/60 border border-white/10 rounded-3xl overflow-hidden flex flex-col relative shadow-2xl">
-                    {connectionStatus === "disconnected" && nodes.length === 0 && (
-                      <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
-                        <Server className="w-10 h-10 text-white animate-pulse" />
-                        <h3 className="text-base font-cyber font-black text-white uppercase">Live eBPF Daemon Offline</h3>
-                        <p className="text-xs text-slate-300 max-w-md font-sans">
-                          You are viewing the hosted dashboard. Click <strong className="text-white">SIMULATE ATTACK</strong> above to run an in-browser attack scenario, or connect your local daemon on <code className="text-white">ws://localhost:8765</code>.
-                        </p>
-                        <div className="flex items-center gap-3 mt-2 font-mono">
-                          <button
-                            onClick={() => runSimulationScenario("full_chain")}
-                            className="bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-5 py-2.5 rounded-full text-xs shadow-lg transition-all"
-                          >
-                            Try In-Browser Simulation
-                          </button>
-                          <button
-                            onClick={() => setShowHelpModal(true)}
-                            className="bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-mono font-bold px-4 py-2.5 rounded-full text-xs transition-all"
-                          >
-                            How to Connect Local Daemon
-                          </button>
+                <>
+                  {/* ─── Column 2: Center - Spacious Process Graph Canvas (Full Height) ─── */}
+                  <div className="flex-1 flex flex-col min-w-0 relative h-full">
+                    <div className="flex-1 bg-black/70 border border-white/10 rounded-3xl overflow-hidden flex flex-col relative shadow-2xl h-full">
+                      {connectionStatus === "disconnected" && nodes.length === 0 && (
+                        <div className="absolute inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-center gap-3 p-6 text-center">
+                          <Server className="w-10 h-10 text-white animate-pulse" />
+                          <h3 className="text-base font-cyber font-black text-white uppercase">Live eBPF Daemon Offline</h3>
+                          <p className="text-xs text-slate-300 max-w-md font-sans">
+                            You are viewing the hosted dashboard. Click <strong className="text-white">SIMULATE ATTACK</strong> above to run an in-browser attack scenario, or connect your local daemon on <code className="text-white">ws://localhost:8765</code>.
+                          </p>
+                          <div className="flex items-center gap-3 mt-2 font-mono">
+                            <button
+                              onClick={() => runSimulationScenario("full_chain")}
+                              className="bg-white hover:bg-orange-500 hover:text-white text-black font-cyber font-black px-5 py-2.5 rounded-full text-xs shadow-lg transition-all"
+                            >
+                              Try In-Browser Simulation
+                            </button>
+                            <button
+                              onClick={() => setShowHelpModal(true)}
+                              className="bg-white/10 hover:bg-white hover:text-black border border-white/20 text-white font-mono font-bold px-4 py-2.5 rounded-full text-xs transition-all"
+                            >
+                              How to Connect Local Daemon
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    <div className="flex-1 relative">
-                      <FlowGraph
-                        nodes={nodes}
-                        edges={edges}
-                        onNodesChange={onNodesChange}
-                        onEdgesChange={onEdgesChange}
-                      />
+                      <div className="flex-1 relative h-full">
+                        <FlowGraph
+                          nodes={nodes}
+                          edges={edges}
+                          onNodesChange={onNodesChange}
+                          onEdgesChange={onEdgesChange}
+                        />
+                      </div>
                     </div>
+                  </div>
+
+                  {/* ─── Column 3: Dedicated Behavioral Threat Intelligence Column (User Requested Extra Column) ─── */}
+                  <div className="w-80 sm:w-96 glass-panel border border-white/10 rounded-3xl flex flex-col shrink-0 overflow-hidden h-full">
                     <ThreatPanel narrations={narrations} />
                   </div>
-                </div>
+                </>
               )}
 
               {activeTab === "timeline" && (
-                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono">
+                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
                   <div className="max-w-4xl mx-auto space-y-4">
                     <div className="flex items-center justify-between mb-4">
                       <div>
@@ -762,7 +768,7 @@ export default function DashboardPage() {
               )}
 
               {activeTab === "analytics" && (
-                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono">
+                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
                   <div className="max-w-4xl mx-auto space-y-6">
                     <div>
                       <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Security Analytics & Metrics</h2>
@@ -788,7 +794,7 @@ export default function DashboardPage() {
               )}
 
               {activeTab === "network" && (
-                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono">
+                <div className="flex-1 p-5 overflow-y-auto bg-black/40 border border-white/10 rounded-3xl font-mono h-full">
                   <div className="max-w-4xl mx-auto space-y-6">
                     <div>
                       <h2 className="text-base font-cyber font-black text-white uppercase tracking-wide">Network Connection Topology</h2>
@@ -809,8 +815,8 @@ export default function DashboardPage() {
                 </div>
               )}
 
-              {/* ─── Event Stream Sidebar (310px) ─── */}
-              <div className="w-80 glass-panel border border-white/10 rounded-3xl flex flex-col shrink-0 overflow-hidden">
+              {/* ─── Column 4: Dedicated Live Event Stream Sidebar (280px) ─── */}
+              <div className="w-72 sm:w-80 glass-panel border border-white/10 rounded-3xl flex flex-col shrink-0 overflow-hidden h-full">
                 {/* Sidebar Header */}
                 <div className="px-4 py-3.5 border-b border-white/10 flex items-center justify-between bg-white/5 font-mono">
                   <div className="flex items-center gap-2">
