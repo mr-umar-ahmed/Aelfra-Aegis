@@ -1,5 +1,8 @@
 import "./globals.css";
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
   title: "Aegis — Runtime Threat Monitor",
@@ -15,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="bg-villa text-ocean antialiased h-screen w-screen overflow-hidden font-sans">
+    <html lang="en" className="bg-background">
+      <body className={`${inter.variable} bg-background text-foreground antialiased min-h-screen font-sans`}>
         {children}
       </body>
     </html>
