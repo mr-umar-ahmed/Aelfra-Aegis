@@ -8,5 +8,12 @@ implementation_plan.md
 node_modules/
 .next/
 
+# Python cache & databases
+__pycache__/
+*.pyc
+data/*.db
+data/incidents/*.json
+data/audit/*.jsonl
+
 # Environment files
 .env

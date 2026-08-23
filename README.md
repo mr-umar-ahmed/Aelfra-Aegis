@@ -8,7 +8,7 @@
 /_/   \_\|______\____|___|____/ 
 ```
 
-### eBPF-Powered Supply Chain Runtime Intrusion Detection & Mitigation System
+### eBPF-Powered Supply Chain Runtime Intrusion Detection & Autonomous Defense
 [![Build Status](https://img.shields.io/github/actions/workflow/status/mr-umar-ahmed/Aelfra-Aegis/aegis-scan.yml?branch=main)](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Language](https://img.shields.io/badge/language-C%20%7C%20Python%20%7C%20Next.js-blue.svg)](#tech-stack)
@@ -19,7 +19,7 @@
 
 Aegis is an open-source, kernel-level runtime guard designed to detect and block supply chain attacks in real-time. By leveraging eBPF (Extended Berkeley Packet Filter) probes attached directly inside the Linux kernel, Aegis intercepts critical system calls—such as file opens, process executions, and TCP network connections. This approach allows security teams to identify malicious activities, such as exfiltrating `.env` credentials, running unauthorized shells, or initiating cryptomining connections, directly at the OS level without any modification to application code.
 
-Traditional static analysis scanners look for known vulnerabilities inside dependency lockfiles, failing to flag sophisticated Zero-Day attacks or typosquatted packages containing dynamic postinstall execution chains. Aegis runs alongside package installations, analyzing process behaviors, correlating multi-step attack patterns, generating plain-English threat narratives using Claude Sonnet, and offering an immediate runtime "Kill Switch" to terminate malicious processes instantly.
+Traditional static analysis scanners look for known vulnerabilities inside dependency lockfiles, failing to flag sophisticated Zero-Day attacks or typosquatted packages containing dynamic postinstall execution chains. Aegis runs alongside package installations, analyzing process behaviors, correlating multi-step attack patterns with a hot-reloading JSON policy engine, and offering autonomous runtime blocking via `SIGKILL` without requiring human intervention.
 
 ---
 
@@ -35,17 +35,84 @@ graph TD
 
     subgraph "User Space Daemon"
         D -->|Poll Events| E[Python eBPF Daemon]
+        R[config/rules.json Policy Engine] -->|Hot-Reloading Rules| E
         E -->|Store Data| F[(SQLite Database /data/aegis.db)]
         E -->|Heuristics & Risk Scoring| G[Threat Narration Engine]
-        G -->|Trigger Anthropic API| H[Claude Sonnet 3.5]
+        G -->|Trigger Anthropic / Groq API| H[AI Threat Narrator]
+        E -->|Autonomous SIGKILL| K[Headless Threat Blocker]
     end
 
     subgraph "Next.js Dashboard Console"
         E -->|WebSockets ws://8765| I[React Flow Provenance Graph]
         I -->|Interactive Kill Switch| E
         J[Timeline tab] -->|Fetch History| F
-        K[Export Report] -->|Generate Report| L[HTML Report Download]
+        L[Export Report] -->|Generate Report| M[HTML Report Download]
     end
+```
+
+---
+
+## Daemon Execution Modes
+
+The Aegis daemon supports three distinct operational modes tailored for development, production CI/CD pipelines, and compliance auditing:
+
+```bash
+# 1. Interactive Mode (Default) — Starts WebSocket server for Next.js dashboard UI
+python3 daemon/daemon.py --mode=interactive
+
+# 2. Headless Mode (Autonomous CI/CD Guard) — Automatically kills high-confidence threats (>= 90%)
+python3 daemon/daemon.py --mode=headless --threshold=90
+
+# 3. Audit Mode (Passive Compliance Log) — Logs all matched events to data/audit/*.jsonl without killing
+python3 daemon/daemon.py --mode=audit
+```
+
+---
+
+## Custom Detection Rules
+
+Aegis uses a declarative, hot-reloading policy engine located at `config/rules.json`. The daemon watches this file using file mtime checks and reloads rules automatically every 5 seconds without requiring a restart.
+
+### Rule Structure
+
+Rules support single-event matching (`file`, `exec`, `network`) and temporal sequence correlation (`chain`).
+
+```json
+{
+  "id": "CRED_001",
+  "name": "Credential File Access",
+  "description": "Process accessed a known credential file path",
+  "severity": "CRITICAL",
+  "mitre_technique": "T1552.001",
+  "event_type": "file",
+  "conditions": {
+    "fname_contains_any": [".env", ".aws/credentials", ".ssh/id_rsa"],
+    "comm_not_in": ["vim", "cat", "nano", "grep", "less"]
+  },
+  "action": "alert",
+  "confidence": 85
+}
+```
+
+### Example: Adding a PyPI Package Postinstall Hook Detector
+
+To detect malicious PyPI packages executing child shell scripts during `pip install`, add the following rule to `config/rules.json`:
+
+```json
+{
+  "id": "PYPI_001",
+  "name": "PyPI Package Postinstall Shell Spawn",
+  "description": "pip spawned unexpected shell reconnaissance during package build",
+  "severity": "HIGH",
+  "mitre_technique": "T1059.006",
+  "event_type": "exec",
+  "conditions": {
+    "parent_comm_in": ["pip", "pip3", "python", "python3"],
+    "fname_contains_any": ["setup.py", "bash", "sh", "curl", "wget", "whoami"]
+  },
+  "action": "kill",
+  "confidence": 92
+}
 ```
 
 ---
@@ -55,43 +122,31 @@ graph TD
 | Feature | Aegis | Falco | Tracee |
 | :--- | :--- | :--- | :--- |
 | **Detection Method** | eBPF Kernel Probes (C) | eBPF / Kernel Module | eBPF Kernel Probes |
-| **Config Language** | Dynamic Python Heuristics | Static YAML Rules | Go / Signature Rules |
+| **Config Language** | JSON Policy Rules with Hot-Reload | Static YAML Rules | Go / OPA Signatures |
+| **Autonomous Blocking** | Built-in Headless SIGKILL (< 50ms) | Requires FalcoSidekick | Requires separate agent |
 | **Visualization** | Interactive React Flow Graph | CLI / External Dashboard | CLI / JSON Stream |
-| **CI/CD Integration** | GitHub Actions Workflow | External Plugins | Integration needed |
-| **AI Narration** | 3-Sentence Claude Threat Narratives | None (Structured Logs) | None (Structured Logs) |
+| **CI/CD Integration** | Standalone CLI + GitHub Actions | External Plugins | Integration needed |
+| **AI Narration** | Plain-English AI Threat Narratives | None (Structured Logs) | None (Structured Logs) |
 | **Overhead** | Very Low (< 1% CPU overhead) | Low (Varies with rules) | Low (Varies with rules) |
-
----
-
-## Attack Coverage
-
-| Attack Type | Description | Real-World Example / Incident |
-| :--- | :--- | :--- |
-| **`CRED_THEFT`** | Reads sensitive files (e.g., `~/.env`, `~/.aws/credentials`) and attempts exfiltration. | Codecov Bash Uploader Hack |
-| **`REVERSE_SHELL`** | Opens a shell listener or pipes a socket process stream to `/bin/bash`. | SolarWinds Orion Backdoor |
-| **`CRYPTOMINER`** | Spawns heavy CPU loop threads and connects to standard mining pool ports. | Typo-squatted malicious miners |
-| **`TYPOSQUATTER`** | Installs packages with close edit distances mimicking common modules (e.g., `lodsh`). | `cross-env` Typosquat Incident |
 
 ---
 
 ## Quick Start
 
-Get Aegis up and running in 5 simple commands:
-
 ```bash
-# 1. Clone the repository and install dependency scan dependencies
+# 1. Clone the repository
 git clone https://github.com/mr-umar-ahmed/Aelfra-Aegis.git && cd Aelfra-Aegis
 
-# 2. Setup your local environment credentials for AI Narration and AbuseIPDB
-cp .env.example .env && nano .env
+# 2. Setup your local environment
+cp .env.example .env
 
 # 3. Start the Next.js Web Dashboard
 cd dashboard && npm install && npm run dev
 
-# 4. Start the eBPF Daemon (requires sudo on Linux; falls back to Mock Mode on Windows/macOS)
-cd ../ebpf && sudo python3 daemon.py
+# 4. Start the eBPF Daemon (Interactive Mode)
+sudo python3 daemon/daemon.py --mode=interactive
 
-# 5. Run the offline Aegis CLI Dependency Scanner
+# 5. Run the offline Aegis CLI Dependency Scanner (Headless Mode)
 python3 cli/aegis-scan.py simulator/attacks/cred-theft/package.json
 ```
 
@@ -103,36 +158,8 @@ python3 cli/aegis-scan.py simulator/attacks/cred-theft/package.json
 2. **Module B (Exfiltration Engine)**: Outbound socket tracking correlated against AbuseIPDB databases.
 3. **Module C (Baseline Engine)**: Percentile-based risk scoring (0-100) mapped against 10 clean npm packages.
 4. **Module D (CLI & Actions)**: Sandbox CLI wrapper run inside Docker alongside GitHub Actions CI pipeline.
-5. **Module E (AI Narrator)**: Live Anthropic integration converting event tables to plain-English narratives.
+5. **Module E (AI Narrator)**: Live AI integration converting event tables to plain-English narratives.
 6. **Module F (Attack Library)**: Mock-ready scripts covering 4 common malicious supply chain patterns.
 7. **Module G (Database & Export)**: Built-in SQLite event indexing with dynamic client-side HTML report export.
-
----
-
-## Interview Deep-Dives
-
-Here are 8 deep-dive technical questions and answers summarizing the design constraints of Aegis:
-
-#### 1. Why `sys_enter_openat` and not `sys_enter_read`?
-Monitoring read calls introduces prohibitive overhead due to high volume. Monitoring `openat` flags the target file when opened, letting us evaluate intent without degrading system-wide read throughput.
-
-#### 2. What is a BPF ring buffer and why is it better than the older perf buffer?
-The ring buffer is a single queue shared across all CPUs, resolving memory fragmentation and guaranteeing global event ordering. It replaces the perf buffer's per-CPU pools which drop bursts of events.
-
-#### 3. What is the difference between a kprobe and a tracepoint?
-`kprobes` are dynamic hooks that can attach to almost any kernel function, making them fragile to version updates. `tracepoints` are static hooks hardcoded in the kernel source, making them highly stable.
-
-#### 4. What is BTF (BPF Type Format) and why does it matter?
-BTF encodes type info and struct layouts into the kernel. It allows eBPF tools to remain portable, adjusting struct offsets dynamically during runtime (CO-RE: Compile Once - Run Everywhere).
-
-#### 5. What overhead does an eBPF probe add?
-Generally under 1% CPU overhead. The hook runs entirely in-kernel with highly-optimized BPF bytecode before passing execution control back to user-space, avoiding context switch overhead.
-
-#### 6. How does the kernel verifier work?
-The verifier performs static analysis to ensure the program cannot crash or lock up the kernel. It checks that branches terminate, code does not read uninitialized stack memory, and arrays are safe from buffer overflows.
-
-#### 8. How is Aegis different from Falco?
-Falco uses static YAML rulesets to alert on anomalies. Aegis creates a live visual provenance graph, links network calls directly back to their parent process trees, and enables dynamic process killing.
-
-#### 8. How does the kill switch work in a secure manner?
-The client issues a WebSocket `kill` request. The Python daemon validates the PID corresponds to an active tracked thread in our SQLite store and triggers `os.kill(pid, SIGKILL)` in user-space, preventing execution hijacking.
+8. **Industry Upgrade 1 (Policy Rule Engine)**: Declarative JSON policy engine with MITRE techniques and hot-reload.
+9. **Industry Upgrade 2 (Headless Auto-Block)**: Autonomous CI/CD threat blocking and passive audit compliance.
