@@ -2,8 +2,8 @@
 """
 Aelfra Aegis eBPF Security Daemon
 Integrates BCC ring buffer / kprobes with a JSON policy rule engine,
-SIEM-compatible structured JSONL audit logger, real-time WebSocket bridge,
-and autonomous headless SIGKILL blocking.
+SIEM-compatible structured JSONL audit logger, Grafana Loki log shipper,
+real-time WebSocket bridge, and autonomous headless SIGKILL blocking.
 """
 
 import argparse
@@ -23,10 +23,11 @@ import urllib.request
 from collections import deque
 from typing import Any, Dict, List, Optional
 
-# Add daemon directory for rule_engine and structured_logger imports
+# Add daemon directory for rule_engine, structured_logger, and loki_shipper imports
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "daemon"))
 from rule_engine import RuleEngine
 from structured_logger import StructuredLogger
+from loki_shipper import LokiShipper
 
 try:
     from bcc import BPF  # type: ignore
@@ -53,6 +54,7 @@ DAEMON_MODE = "interactive"  # interactive | headless | audit
 AUTO_KILL_THRESHOLD = 90
 RULES_ENGINE: Optional[RuleEngine] = None
 STRUCTURED_LOGGER: Optional[StructuredLogger] = None
+LOKI_SHIPPER: Optional[LokiShipper] = None
 INCIDENT_COUNTER = 0
 
 # Load .env file
@@ -248,9 +250,13 @@ def execute_autonomous_kill(pid: int, rule: dict, events: list):
     # Write incident report
     record_headless_incident(pid, rule, events, latency_ms)
 
-    # Log to SIEM Structured Log
-    if STRUCTURED_LOGGER and events:
-        STRUCTURED_LOGGER.log_event(events[-1], rule, action_taken="kill")
+    # Log to SIEM Structured Log & Loki
+    if events:
+        last_evt = events[-1]
+        if STRUCTURED_LOGGER:
+            STRUCTURED_LOGGER.log_event(last_evt, rule, action_taken="kill")
+        if LOKI_SHIPPER:
+            LOKI_SHIPPER.ship(last_evt, {"action_taken": "kill", "rule_id": rule.get("rule_id", "CHAIN_001")})
 
     # Update SQLite database
     with sqlite3.connect(DB_PATH) as conn:
@@ -434,10 +440,12 @@ async def check_chains():
                     rule_id = chain_rule.get("rule_id", "CHAIN_001")
                     attack_type = chain_rule.get("rule_name", "Full Attack Chain")
 
-                    # SIEM Log chain match
+                    # SIEM Log & Loki shipping
+                    action = "kill" if (DAEMON_MODE == "headless" and chain_rule.get("confidence", 0) >= AUTO_KILL_THRESHOLD) else "alert"
                     if STRUCTURED_LOGGER:
-                        action = "kill" if (DAEMON_MODE == "headless" and chain_rule.get("confidence", 0) >= AUTO_KILL_THRESHOLD) else "alert"
                         STRUCTURED_LOGGER.log_event(events[-1], chain_rule, action_taken=action)
+                    if LOKI_SHIPPER:
+                        LOKI_SHIPPER.ship(events[-1], {"rule_id": rule_id, "action_taken": action})
 
                     # Headless auto-kill check
                     if (
@@ -476,7 +484,7 @@ async def check_chains():
 
 # --- BPF Event Processor ---
 def process_event_data(event_dict: dict):
-    """Passes kernel event to RuleEngine, logs to SIEM structured log, and dispatches actions."""
+    """Passes kernel event to RuleEngine, logs to SIEM structured log & Loki, and dispatches actions."""
     matched_rules = RULES_ENGINE.evaluate_event(event_dict) if RULES_ENGINE else []
 
     attack_type = "UNKNOWN"
@@ -506,9 +514,11 @@ def process_event_data(event_dict: dict):
             killed_pids.add(event_dict.get("pid"))
             execute_autonomous_kill(event_dict.get("pid"), primary_match, [event_dict])
 
-        # Write to SIEM Structured Log (JSONL)
+        # Write to SIEM Structured Log (JSONL) & Loki
         if STRUCTURED_LOGGER:
             STRUCTURED_LOGGER.log_event(event_dict, primary_match, action_taken=action_taken)
+        if LOKI_SHIPPER:
+            LOKI_SHIPPER.ship(event_dict, {"rule_id": rule_id, "action_taken": action_taken})
 
         if DAEMON_MODE == "audit":
             # Print structured stdout format for CLI
@@ -771,14 +781,15 @@ def print_startup_banner():
 
 
 async def main_async(rules_file: str):
-    global main_loop, event_queue, b, RULES_ENGINE, STRUCTURED_LOGGER
+    global main_loop, event_queue, b, RULES_ENGINE, STRUCTURED_LOGGER, LOKI_SHIPPER
     main_loop = asyncio.get_running_loop()
     event_queue = asyncio.Queue()
 
     print_startup_banner()
 
-    # Initialize Structured Logger & Policy Rule Engine
+    # Initialize Structured Logger, Loki Shipper, and Policy Rule Engine
     STRUCTURED_LOGGER = StructuredLogger()
+    LOKI_SHIPPER = LokiShipper()
     RULES_ENGINE = RuleEngine(rules_file)
 
     # Log daemon startup event in SIEM log
