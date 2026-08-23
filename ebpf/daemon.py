@@ -2,8 +2,8 @@
 """
 Aelfra Aegis eBPF Security Daemon
 Integrates BCC ring buffer / kprobes with a JSON policy rule engine,
-real-time WebSocket bridge (interactive mode), autonomous headless SIGKILL blocking,
-and passive audit compliance logging.
+SIEM-compatible structured JSONL audit logger, real-time WebSocket bridge,
+and autonomous headless SIGKILL blocking.
 """
 
 import argparse
@@ -23,9 +23,10 @@ import urllib.request
 from collections import deque
 from typing import Any, Dict, List, Optional
 
-# Add daemon directory for rule_engine import
+# Add daemon directory for rule_engine and structured_logger imports
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(__file__)), "daemon"))
 from rule_engine import RuleEngine
+from structured_logger import StructuredLogger
 
 try:
     from bcc import BPF  # type: ignore
@@ -51,6 +52,7 @@ b = None
 DAEMON_MODE = "interactive"  # interactive | headless | audit
 AUTO_KILL_THRESHOLD = 90
 RULES_ENGINE: Optional[RuleEngine] = None
+STRUCTURED_LOGGER: Optional[StructuredLogger] = None
 INCIDENT_COUNTER = 0
 
 # Load .env file
@@ -221,35 +223,6 @@ def record_headless_incident(pid: int, matched_rule: dict, triggering_events: li
         print(f"[HEADLESS ERROR] Failed to write incident report: {e}", file=sys.stderr, flush=True)
 
 
-def record_audit_event(event: dict, matched_rules: list):
-    now_dt = datetime.datetime.now(datetime.timezone.utc)
-    date_str = now_dt.strftime("%Y-%m-%d")
-    audit_file = os.path.join(AUDIT_DIR, f"{date_str}.jsonl")
-
-    for rule in matched_rules:
-        audit_entry = {
-            "timestamp": event.get("timestamp", now_dt.isoformat()),
-            "severity": rule.get("severity", "INFO"),
-            "rule_id": rule.get("rule_id", "GENERAL"),
-            "rule_name": rule.get("rule_name", ""),
-            "mitre_technique": rule.get("mitre_technique", "T1059"),
-            "pid": event.get("pid"),
-            "comm": event.get("comm"),
-            "filename": event.get("filename"),
-            "confidence": rule.get("confidence", 80),
-        }
-        # Print structured stdout format
-        print(
-            f"[AUDIT] {audit_entry['timestamp']} | {audit_entry['severity']} | {audit_entry['rule_id']} | PID:{audit_entry['pid']} {audit_entry['comm']} | {audit_entry['mitre_technique']}",
-            flush=True,
-        )
-        try:
-            with open(audit_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(audit_entry) + "\n")
-        except Exception as e:
-            print(f"[AUDIT LOG ERROR] {e}", file=sys.stderr, flush=True)
-
-
 # --- Autonomous Execution & Kill Dispatch ---
 def execute_autonomous_kill(pid: int, rule: dict, events: list):
     t_start = time.perf_counter()
@@ -274,6 +247,10 @@ def execute_autonomous_kill(pid: int, rule: dict, events: list):
 
     # Write incident report
     record_headless_incident(pid, rule, events, latency_ms)
+
+    # Log to SIEM Structured Log
+    if STRUCTURED_LOGGER and events:
+        STRUCTURED_LOGGER.log_event(events[-1], rule, action_taken="kill")
 
     # Update SQLite database
     with sqlite3.connect(DB_PATH) as conn:
@@ -457,6 +434,11 @@ async def check_chains():
                     rule_id = chain_rule.get("rule_id", "CHAIN_001")
                     attack_type = chain_rule.get("rule_name", "Full Attack Chain")
 
+                    # SIEM Log chain match
+                    if STRUCTURED_LOGGER:
+                        action = "kill" if (DAEMON_MODE == "headless" and chain_rule.get("confidence", 0) >= AUTO_KILL_THRESHOLD) else "alert"
+                        STRUCTURED_LOGGER.log_event(events[-1], chain_rule, action_taken=action)
+
                     # Headless auto-kill check
                     if (
                         DAEMON_MODE == "headless"
@@ -466,10 +448,6 @@ async def check_chains():
                     ):
                         killed_pids.add(pid)
                         execute_autonomous_kill(pid, chain_rule, events)
-
-                    # Audit mode record
-                    if DAEMON_MODE == "audit":
-                        record_audit_event(events[-1], [chain_rule])
 
                     # Trigger narration in interactive mode after 30s
                     if (now - first_ts >= 30 or DAEMON_MODE != "interactive") and pid not in narrated_pids:
@@ -498,7 +476,7 @@ async def check_chains():
 
 # --- BPF Event Processor ---
 def process_event_data(event_dict: dict):
-    """Passes kernel event to RuleEngine, enriches payload, and dispatches actions."""
+    """Passes kernel event to RuleEngine, logs to SIEM structured log, and dispatches actions."""
     matched_rules = RULES_ENGINE.evaluate_event(event_dict) if RULES_ENGINE else []
 
     attack_type = "UNKNOWN"
@@ -506,6 +484,7 @@ def process_event_data(event_dict: dict):
     rule_id = ""
     mitre_tech = ""
     confidence = 0
+    action_taken = "alert"
 
     if matched_rules:
         primary_match = matched_rules[0]
@@ -514,10 +493,7 @@ def process_event_data(event_dict: dict):
         severity = primary_match.get("severity", "low").lower()
         mitre_tech = primary_match.get("mitre_technique", "")
         confidence = primary_match.get("confidence", 80)
-
-        # Audit Mode logging
-        if DAEMON_MODE == "audit":
-            record_audit_event(event_dict, matched_rules)
+        action_taken = primary_match.get("action", "alert")
 
         # Headless Auto-Kill condition
         if (
@@ -526,8 +502,21 @@ def process_event_data(event_dict: dict):
             and confidence >= AUTO_KILL_THRESHOLD
             and event_dict.get("pid") not in killed_pids
         ):
+            action_taken = "kill"
             killed_pids.add(event_dict.get("pid"))
             execute_autonomous_kill(event_dict.get("pid"), primary_match, [event_dict])
+
+        # Write to SIEM Structured Log (JSONL)
+        if STRUCTURED_LOGGER:
+            STRUCTURED_LOGGER.log_event(event_dict, primary_match, action_taken=action_taken)
+
+        if DAEMON_MODE == "audit":
+            # Print structured stdout format for CLI
+            now_str = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+            print(
+                f"[AUDIT] {now_str} | {severity.upper()} | {rule_id} | PID:{event_dict.get('pid')} {event_dict.get('comm')} | {mitre_tech}",
+                flush=True,
+            )
     else:
         # Fallback heuristic severity
         if event_dict["event_type"] == "file_open" and ".env" in event_dict.get("filename", ""):
@@ -535,6 +524,9 @@ def process_event_data(event_dict: dict):
             attack_type = "CREDENTIAL_THEFT"
         elif event_dict["event_type"] == "network":
             severity = "high"
+
+        if STRUCTURED_LOGGER and DAEMON_MODE == "audit":
+            STRUCTURED_LOGGER.log_event(event_dict, None, action_taken="logged")
 
     event_dict["severity"] = severity
     event_dict["attack_type"] = attack_type
@@ -718,6 +710,12 @@ async def ws_handler(websocket, path=None):
                         }
                         with sqlite3.connect(DB_PATH) as conn:
                             conn.execute("UPDATE incidents SET status = 'terminated' WHERE pid = ?", (pid,))
+                        if STRUCTURED_LOGGER:
+                            STRUCTURED_LOGGER.log_event(
+                                {"pid": pid, "comm": "manual_kill", "event_type": "kill_action"},
+                                {"rule_id": "KILL_SWITCH", "rule_name": "Manual Kill Action", "severity": "CRITICAL"},
+                                action_taken="kill",
+                            )
                     except Exception as err:
                         res = {"type": "kill_result", "pid": pid, "success": False, "message": str(err)}
                     await websocket.send(json.dumps(res))
@@ -753,6 +751,7 @@ def print_startup_banner():
 ╔══════════════════════════════════════╗
 ║   AEGIS DAEMON v1.0 — AUDIT ONLY     ║
 ║   Mode: PASSIVE LOGGING (NO KILL)    ║
+║   Audit Log: data/audit/             ║
 ║   WebSocket: DISABLED                ║
 ╚══════════════════════════════════════╝
 """,
@@ -772,14 +771,23 @@ def print_startup_banner():
 
 
 async def main_async(rules_file: str):
-    global main_loop, event_queue, b, RULES_ENGINE
+    global main_loop, event_queue, b, RULES_ENGINE, STRUCTURED_LOGGER
     main_loop = asyncio.get_running_loop()
     event_queue = asyncio.Queue()
 
     print_startup_banner()
 
-    # Initialize Policy Rule Engine
+    # Initialize Structured Logger & Policy Rule Engine
+    STRUCTURED_LOGGER = StructuredLogger()
     RULES_ENGINE = RuleEngine(rules_file)
+
+    # Log daemon startup event in SIEM log
+    STRUCTURED_LOGGER.log_lifecycle(
+        "daemon_start",
+        mode=DAEMON_MODE,
+        auto_kill_threshold=AUTO_KILL_THRESHOLD,
+        rules_file=os.path.basename(rules_file),
+    )
 
     if BPF is None or os.name == "nt":
         print("[NOTICE] BCC kernel driver not present (running mock generator).", flush=True)
@@ -817,7 +825,7 @@ async def main_async(rules_file: str):
 
 
 def main():
-    global DAEMON_MODE, AUTO_KILL_THRESHOLD
+    global DAEMON_MODE, AUTO_KILL_THRESHOLD, STRUCTURED_LOGGER
     parser = argparse.ArgumentParser(
         description="Aelfra Aegis eBPF Security Daemon",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -847,6 +855,8 @@ def main():
     try:
         asyncio.run(main_async(args.rules))
     except KeyboardInterrupt:
+        if STRUCTURED_LOGGER:
+            STRUCTURED_LOGGER.log_lifecycle("daemon_shutdown")
         print("\n[DAEMON] Shutting down Aegis security daemon cleanly.", flush=True)
         sys.exit(0)
 

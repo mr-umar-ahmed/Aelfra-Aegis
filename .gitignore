@@ -11,9 +11,8 @@ node_modules/
 # Python cache & databases
 __pycache__/
 *.pyc
-data/*.db
-data/incidents/*.json
-data/audit/*.jsonl
+data/*
+!data/.gitkeep
 
 # Environment files
 .env
