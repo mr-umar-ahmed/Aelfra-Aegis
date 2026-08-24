@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Aelfra Aegis — Master System Blueprint & Architecture Guide</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@600;700;800;900&display=swap');
+
+  @page {
+    size: A4 portrait;
+    margin: 18mm 16mm 20mm 16mm;
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: 'Inter', sans-serif;
+      font-size: 8pt;
+      color: #64748b;
+    }
+    @bottom-left {
+      content: "Aelfra Aegis — Confidential & Enterprise Ready";
+      font-family: 'Inter', sans-serif;
+      font-size: 8pt;
+      color: #64748b;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    line-height: 1.6;
+    font-size: 10pt;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Cover Page */
+  .cover-page {
+    page-break-after: always;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 40px 20px;
+    background: linear-gradient(145deg, #090a0f 0%, #111420 50%, #0c121e 100%);
+    color: #ffffff;
+    border-radius: 12px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 9pt;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #38bdf8;
+    margin-bottom: 20px;
+  }
+  .cover-title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 34pt;
+    font-weight: 900;
+    line-height: 1.15;
+    letter-spacing: -0.5px;
+    margin: 0 0 15px 0;
+    background: linear-gradient(90deg, #ffffff, #94a3b8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .cover-subtitle {
+    font-size: 14pt;
+    font-weight: 400;
+    color: #94a3b8;
+    max-width: 650px;
+    line-height: 1.5;
+    margin: 0 0 30px 0;
+  }
+  .cover-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-top: 40px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 18px;
+  }
+  .cover-stat-label {
+    font-size: 8pt;
+    color: #64748b;
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 1px;
+  }
+  .cover-stat-value {
+    font-size: 12pt;
+    color: #f8fafc;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    margin-top: 3px;
+  }
+  .cover-footer {
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: 20px;
+    font-size: 9pt;
+    color: #64748b;
+  }
+
+  /* Headings & Typography */
+  h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 20pt;
+    font-weight: 800;
+    color: #0f172a;
+    border-bottom: 2px solid #e2e8f0;
+    padding-bottom: 8px;
+    margin-top: 35px;
+    margin-bottom: 15px;
+    page-break-after: avoid;
+  }
+  h2 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 14pt;
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 24px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+  }
+  h3 {
+    font-size: 11pt;
+    font-weight: 700;
+    color: #334155;
+    margin-top: 18px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+  }
+  p { margin: 0 0 10px 0; }
+  strong { font-weight: 700; color: #0f172a; }
+
+  /* Page Break Utilities */
+  .page-break { page-break-after: always; }
+  .avoid-break { page-break-inside: avoid; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 15px 0 20px 0;
+    font-size: 8.5pt;
+    page-break-inside: avoid;
+  }
+  th {
+    background-color: #0f172a;
+    color: #ffffff;
+    font-weight: 700;
+    text-align: left;
+    padding: 8px 10px;
+    font-family: 'Inter', sans-serif;
+  }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #334155;
+    vertical-align: top;
+  }
+  tr:nth-child(even) { background-color: #f8fafc; }
+
+  /* Code & Terminals */
+  pre, code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  code {
+    background-color: #f1f5f9;
+    color: #0f172a;
+    padding: 2px 5px;
+    border-radius: 4px;
+    font-size: 8.5pt;
+  }
+  pre {
+    background-color: #0b0f19;
+    color: #e2e8f0;
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 8pt;
+    line-height: 1.45;
+    overflow-x: auto;
+    border: 1px solid #1e293b;
+    margin: 12px 0 16px 0;
+    page-break-inside: avoid;
+  }
+
+  /* Callout Boxes */
+  .callout {
+    background-color: #f0fdf4;
+    border-left: 4px solid #16a34a;
+    padding: 12px 15px;
+    border-radius: 0 8px 8px 0;
+    margin: 15px 0;
+    font-size: 9pt;
+    page-break-inside: avoid;
+  }
+  .callout-warning {
+    background-color: #fef2f2;
+    border-left: 4px solid #dc2626;
+  }
+  .callout-info {
+    background-color: #f0f9ff;
+    border-left: 4px solid #0284c7;
+  }
+  .callout-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+    color: #0f172a;
+    font-size: 9.5pt;
+  }
+
+  /* Architecture Boxes */
+  .arch-box {
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin: 12px 0;
+    font-size: 8.5pt;
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= COVER PAGE ================= -->
+<div class="cover-page">
+  <div>
+    <div class="cover-badge">eBPF Kernel Defense • Industry-Ready v1.0</div>
+    <div class="cover-title">AELFRA AEGIS</div>
+    <div class="cover-subtitle">
+      Comprehensive Master System Blueprint, Kernel Architecture, and Enterprise Production Deployment Guide
+    </div>
+  </div>
+
+  <div>
+    <div class="cover-grid">
+      <div>
+        <div class="cover-stat-label">Author & Lead Architect</div>
+        <div class="cover-stat-value">Umar Ahmed</div>
+      </div>
+      <div>
+        <div class="cover-stat-label">Security Focus</div>
+        <div class="cover-stat-value">Runtime Supply Chain Defense</div>
+      </div>
+      <div>
+        <div class="cover-stat-label">Interception Engine</div>
+        <div class="cover-stat-value">Linux eBPF + BPF Ring Buffer</div>
+      </div>
+      <div>
+        <div class="cover-stat-label">Autonomous Action</div>
+        <div class="cover-stat-value">Sub-50ms Headless SIGKILL</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <div>Repository: github.com/mr-umar-ahmed/Aelfra-Aegis</div>
+    <div>Live Console: aelfra-aegis.vercel.app</div>
+  </div>
+</div>
+
+<!-- ================= SECTION 1: PROBLEM STATEMENT ================= -->
+<h1>1. Executive Summary & The Supply Chain Threat</h1>
+
+<p>
+Modern software engineering relies fundamentally on open-source package repositories like <strong>npm</strong> (JavaScript/TypeScript) and <strong>PyPI</strong> (Python). A standard enterprise application imports hundreds of transitive third-party dependencies.
+</p>
+
+<p>
+When an engineer or automated CI/CD pipeline runs <code>npm install</code> or <code>pip install</code>, package managers automatically execute lifecycle scripts (such as <code>preinstall</code>, <code>install</code>, and <code>postinstall</code> in <code>package.json</code>, or <code>setup.py</code> in Python). <strong>These scripts execute arbitrary code with full user or root privileges directly on the host or build runner.</strong>
+</p>
+
+<h2>Why Traditional Static Scanners Fail</h2>
+<p>
+Industry-standard vulnerability tools (e.g. <strong>Snyk, GitHub Dependabot, Trivy, <code>npm audit</code></strong>) are <em>static lockfile scanners</em>. They operate by checking known CVE databases (NVD) against package names in <code>package-lock.json</code>.
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Threat Category</th>
+      <th>Static Scanners (Snyk, Dependabot)</th>
+      <th>Aelfra Aegis Runtime Guard</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Zero-Day Malicious Packages</strong></td>
+      <td>❌ <strong>Blind</strong> — No CVE exists in the database yet.</td>
+      <td>✅ <strong>Catches Instantly</strong> — Detects unauthorized <code>openat</code> / <code>execve</code>.</td>
+    </tr>
+    <tr>
+      <td><strong>Typosquatting (<code>lodsh</code> vs <code>lodash</code>)</strong></td>
+      <td>❌ <strong>Blind</strong> — Valid clean package name in lockfile.</td>
+      <td>✅ <strong>Catches Instantly</strong> — Flags child shells & edit-distance anomalies.</td>
+    </tr>
+    <tr>
+      <td><strong>Account Takeover / Maintainer Hijack</strong></td>
+      <td>❌ <strong>Blind</strong> — Legitimate version bump in registry.</td>
+      <td>✅ <strong>Catches Instantly</strong> — Flags credential access & C2 exfil sockets.</td>
+    </tr>
+    <tr>
+      <td><strong>Obfuscated Dynamic Payloads</strong></td>
+      <td>❌ <strong>Blind</strong> — Static AST cannot parse eval/base64 code.</td>
+      <td>✅ <strong>Catches Instantly</strong> — Observes true kernel-level execution.</td>
+    </tr>
+    <tr>
+      <td><strong>Active Threat Mitigation</strong></td>
+      <td>❌ <strong>None</strong> — Only generates post-build passive reports.</td>
+      <td>✅ <strong>Automated SIGKILL</strong> — Terminates malicious PIDs in &lt; 50ms.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="callout callout-warning">
+  <div class="callout-title">The Real-World Attack Scenario</div>
+  An attacker publishes a typosquatted package <code>aegis-utils</code>. When installed, its <code>postinstall</code> hook reads <code>../../.env</code> to steal AWS keys, initiates an outbound HTTP POST to an external C2 server, and spawns <code>/bin/bash -c id</code> to test remote command execution. <strong>Secrets are stolen in under 400 milliseconds before static tools can even scan the lockfile.</strong>
+</div>
+
+<div class="page-break"></div>
+
+<!-- ================= SECTION 2: OUR SOLUTION ================= -->
+<h1>2. What is Aelfra Aegis? (Our Solution)</h1>
+
+<p>
+<strong>Aelfra Aegis</strong> is an open-source, kernel-level runtime guard designed to detect, trace, and block software supply chain attacks in real-time. By leveraging <strong>eBPF (Extended Berkeley Packet Filter)</strong> probes attached directly inside the Linux kernel, Aegis intercepts critical system calls without modifying application code.
+</p>
+
+<h2>Core Pillars of Aegis Defense</h2>
+<ul>
+  <li><strong>Kernel-Level Interception:</strong> Uses eBPF tracepoints and kprobes (<code>sys_enter_openat</code>, <code>sys_enter_execve</code>, <code>tcp_connect</code>) with <strong>&lt; 1% CPU overhead</strong>.</li>
+  <li><strong>BPF Ring Buffer Architecture:</strong> Unified memory queue shared across all CPU cores with lockless, deterministic event ordering.</li>
+  <li><strong>Hot-Reloading JSON Policy Engine:</strong> Declarative rules (<code>config/rules.json</code>) mapped to <strong>MITRE ATT&amp;CK</strong> techniques, auto-reloading every 5 seconds.</li>
+  <li><strong>Autonomous Headless Blocking:</strong> Sub-50ms automated <code>SIGKILL</code> execution for CI/CD pipelines without requiring human intervention.</li>
+  <li><strong>Temporal Causal Provenance:</strong> Interactive React Flow dashboard visualizing the full process tree (<code>npm</code> → <code>node</code> → <code>bash</code> → <code>network</code>).</li>
+  <li><strong>SIEM-Compatible Telemetry:</strong> Emits append-only JSON Lines (<code>.jsonl</code>) logs with daily UTC rotation and streams directly into <strong>Grafana Loki</strong>.</li>
+  <li><strong>AI Threat Narration:</strong> Built-in LLM integration delivering crisp 3-sentence plain-English intelligence summaries for SOC triage.</li>
+</ul>
+
+<!-- ================= SECTION 3: TECH STACK ================= -->
+<h1>3. Complete Technology Stack & Specifications</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Languages & Technologies</th>
+      <th>Purpose & Operational Function</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Kernel Sensor</strong></td>
+      <td>C, eBPF Bytecode, BPF Ring Buffer, Linux Tracepoints, kprobes, libbpf / CO-RE, BTF</td>
+      <td>Low-level kernel syscall interception, file descriptor reading, and event submission to user space.</td>
+    </tr>
+    <tr>
+      <td><strong>User-Space Daemon</strong></td>
+      <td>Python 3.11, BCC, ctypes, SQLite3, <code>socket</code>, <code>ipaddress</code>, <code>signal</code>, <code>argparse</code></td>
+      <td>Polls ring buffer, enriches process metadata, evaluates JSON policy rules, and executes autonomous SIGKILL.</td>
+    </tr>
+    <tr>
+      <td><strong>SIEM & Telemetry</strong></td>
+      <td>JSON Lines (JSONL), Grafana Loki 2.9, Grafana 10.2, Docker Compose, LogQL</td>
+      <td>Unbuffered audit logging with daily UTC rotation and zero-cost local visual SIEM monitoring.</td>
+    </tr>
+    <tr>
+      <td><strong>Web Console</strong></td>
+      <td>Next.js 14 (App Router), TypeScript, React 18, <code>@xyflow/react</code>, TailwindCSS, Lucide Icons</td>
+      <td>Interactive temporal process graph, 1-tap mobile mode switcher, and live threat intelligence feed.</td>
+    </tr>
+    <tr>
+      <td><strong>Threat Intelligence</strong></td>
+      <td>WebSockets (<code>ws://8765</code>), Groq API (LLaMA 3.1 70B), AbuseIPDB API v2</td>
+      <td>Real-time bi-directional UI bridge, automated 3-sentence threat narratives, and C2 IP reputation scoring.</td>
+    </tr>
+    <tr>
+      <td><strong>CI/CD & Testing</strong></td>
+      <td>GitHub Actions, Docker, Shell Test Suite</td>
+      <td>Containerized dependency isolation, automated PR blocking gates, and log verification tools.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- ================= SECTION 4: ARCHITECTURE ================= -->
+<h1>4. End-to-End System Architecture</h1>
+
+<div class="arch-box">
+<pre>
+┌────────────────────────────────────────────────────────────────────────────────────────┐
+│                                LINUX KERNEL SPACE                                      │
+│                                                                                        │
+│   [npm / pip Install]                                                                  │
+│           │                                                                            │
+│           ├─► sys_enter_openat  ──► [Probe: trace_openat]  ──┐                         │
+│           ├─► sys_enter_execve  ──► [Probe: trace_execve]  ──┼─► [ BPF RING BUFFER ]   │
+│           └─► tcp_connect       ──► [Probe: tcp_connect]   ──┘           │             │
+└──────────────────────────────────────────────────────────────────────────┼─────────────┘
+                                                                           │ (Zero-Copy)
+┌──────────────────────────────────────────────────────────────────────────▼─────────────┐
+│                           USER SPACE PYTHON DAEMON                                     │
+│                                                                                        │
+│   [Ring Buffer Poller] ──► [Event Enrichment: PID, Parent, Comm]                       │
+│                                      │                                                 │
+│                                      ▼                                                 │
+│   [config/rules.json] ──► [RuleEngine: Hot-Reload Watchdog]                            │
+│                                      │                                                 │
+│             ┌────────────────────────┼────────────────────────┐                        │
+│             ▼                        ▼                        ▼                        │
+│   [Headless Auto-Block]    [StructuredLogger JSONL]   [LokiShipper Stream]             │
+│   os.kill(pid, SIGKILL)    data/audit/aegis-*.jsonl   POST /loki/api/v1/push           │
+│   &lt; 50ms Execution         Daily UTC Rotation         Nanosecond Timestamps            │
+└─────────────┬────────────────────────┬────────────────────────┬────────────────────────┘
+              │                        │                        │
+┌─────────────▼────────────┐ ┌─────────▼──────────┐ ┌───────────▼────────────────────────┐
+│     NEXT.JS CONSOLE      │ │   CI/CD BUILD GATE │ │       GRAFANA / LOKI SIEM          │
+│ React Flow Process Graph │ │ GitHub Action Gate │ │ Multi-panel SOC Dashboards         │
+│ Live Kill Switch & Audio │ │ Exit 1 on Threat   │ │ Port 3001 (Anonymous Access)       │
+└──────────────────────────┘ └────────────────────┘ └────────────────────────────────────┘
+</pre>
+</div>
+
+<!-- ================= SECTION 5: COMPREHENSIVE FEATURES ================= -->
+<h1>5. Comprehensive Feature Breakdown</h1>
+
+<h3>1. BPF Ring Buffer Kernel Probes</h3>
+<p>
+Hooks tracepoints for <code>openat</code> and <code>execve</code> along with <code>kprobe/tcp_connect</code>. Unlike legacy perf buffers which allocate per-CPU buffers leading to memory fragmentation, Aegis uses a single global ring buffer with deterministic event ordering.
+</p>
+
+<h3>2. Hot-Reloading Policy Rule Engine (<code>config/rules.json</code>)</h3>
+<p>
+Declarative JSON detection policies mapping directly to MITRE ATT&amp;CK techniques:
+</p>
+<ul>
+  <li><code>CRED_001</code> (T1552.001): Credential File Access (<code>.env</code>, <code>.aws/credentials</code>, <code>id_rsa</code>, <code>secrets.json</code>).</li>
+  <li><code>EXEC_001</code> (T1059.004): Suspicious Child Execution from Package Manager (<code>npm</code>/<code>pip</code> spawning <code>bash</code>, <code>nc</code>, <code>curl</code>).</li>
+  <li><code>NET_001</code> (T1071.001): Unexpected Outbound Egress from Install Process on non-standard ports.</li>
+  <li><code>CHAIN_001</code> (T1020): Full Exfiltration Chain (File read + network connect within 30s for the same PID).</li>
+</ul>
+
+<h3>3. Three Operational Execution Modes</h3>
+<ul>
+  <li><strong><code>--mode=interactive</code> (Default):</strong> Starts the WebSocket bridge on <code>ws://0.0.0.0:8765</code> for live UI visualization.</li>
+  <li><strong><code>--mode=headless</code> (Autonomous Guard):</strong> Automatically issues <code>SIGKILL</code> when confidence &ge; 90%. Writes reports to <code>data/incidents/</code>.</li>
+  <li><strong><code>--mode=audit</code> (Passive Compliance):</strong> Never kills; writes structured logs to <code>data/audit/</code> and exits with non-zero codes in CI.</li>
+</ul>
+
+<h3>4. SIEM Structured Logger (<code>daemon/structured_logger.py</code>)</h3>
+<p>
+Emits append-only JSONL files (<code>data/audit/aegis-YYYY-MM-DD.jsonl</code>). Features zero-cron UTC daily rotation, unbuffered immediate flushing (<code>f.flush()</code>), and MITRE tactic resolution.
+</p>
+
+<h3>5. Grafana + Loki Monitoring Stack (<code>monitoring/</code>)</h3>
+<p>
+Pre-provisioned local Docker Compose stack hosting Loki (<code>:3100</code>) and Grafana (<code>:3001</code>) with pre-built dashboards for log volume, critical threats, and MITRE techniques.
+</p>
+
+<div class="page-break"></div>
+
+<!-- ================= SECTION 6: TESTING GUIDE ================= -->
+<h1>6. Complete Step-by-Step Testing Guide</h1>
+
+<h2>Track 1: In-Browser / Zero-Setup Testing (Any OS)</h2>
+<ol>
+  <li>Open the live dashboard at <strong><a href="https://aelfra-aegis.vercel.app/">https://aelfra-aegis.vercel.app/</a></strong>.</li>
+  <li>Complete the guided onboarding tour and enter the main console.</li>
+  <li>Click <strong><code>SIMULATE ATTACK</code></strong> &rarr; <strong><code>Run Full Attack Chain</code></strong> to observe live node spawning and threat narration.</li>
+  <li>Click the red <strong><code>KILL [PID]</code></strong> button on the compromised node to test process termination.</li>
+</ol>
+
+<h2>Track 2: Real Kernel Daemon &amp; Attack Simulator (Linux / WSL2)</h2>
+<p>Open 3 separate terminals:</p>
+<pre>
+# Terminal 1: Start Mock C2 Exfil Listener
+python3 simulator/listener.py
+
+# Terminal 2: Start eBPF Security Daemon
+sudo python3 daemon/daemon.py --mode=interactive
+
+# Terminal 3: Trigger Real Malicious Package Attack
+cd simulator/target-app
+npm install --foreground-scripts
+</pre>
+
+<h2>Track 3: Autonomous Headless Auto-Block Testing</h2>
+<pre>
+# 1. Run in Headless Mode
+sudo python3 daemon/daemon.py --mode=headless --threshold=90
+
+# 2. Trigger Attack in another terminal
+cd simulator/target-app && npm install --foreground-scripts
+
+# 3. Verify Generated Incident Report
+cat data/incidents/*.json
+</pre>
+
+<h2>Track 4: Enterprise SIEM &amp; Grafana/Loki Stack</h2>
+<pre>
+# 1. Start Docker Stack
+cd monitoring && docker compose up -d
+
+# 2. Run Daemon with Loki Shipping
+AEGIS_LOKI_URL=http://localhost:3100 sudo python3 daemon/daemon.py
+
+# 3. Open Grafana at http://localhost:3001 (Anonymous Admin enabled)
+
+# 4. Verify Log Hygiene
+python3 scripts/verify-logs.py
+</pre>
+
+<h2>Track 5: Standalone CLI Scanner &amp; CI Gate</h2>
+<pre>
+# Run Dependency Scan
+python3 cli/aegis-scan.py package.json
+
+# Run Automated Gate Test Suite
+bash tests/test_ci_gate.sh
+</pre>
+
+<!-- ================= SECTION 7: INTERVIEW FAQS ================= -->
+<h1>7. Technical Deep-Dives &amp; FAQs</h1>
+
+<div class="callout callout-info">
+  <div class="callout-title">Q1: Why hook <code>sys_enter_openat</code> instead of <code>sys_enter_read</code>?</div>
+  Hooking <code>read</code> produces hundreds of thousands of events per second, causing severe CPU degradation. Hooking <code>openat</code> inspects the file descriptor path at open time with &lt; 1% CPU overhead, giving total security visibility with zero performance penalty.
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Q2: What is CO-RE and why does production tooling use libbpf over BCC?</div>
+  BCC requires Clang/LLVM compilers and kernel headers (~300MB) on target hosts. libbpf with CO-RE (Compile Once &mdash; Run Everywhere) compiles Ahead-Of-Time into a single portable <code>.bpf.o</code> binary that relocates struct offsets using kernel BTF metadata at runtime with zero target compiler dependencies.
+</div>
+
+<div class="callout callout-info">
+  <div class="callout-title">Q3: How does Aegis prevent false positives on developers reading .env with vim or cat?</div>
+  Rule <code>CRED_001</code> includes a <code>comm_not_in</code> whitelist (<code>["vim", "cat", "nano", "grep"]</code>), suppressing alerts for interactive user edits while aggressively flagging automated reads from package managers (<code>parent_comm_in: ["npm", "pip", "node"]</code>).
+</div>
+
+</body>
+</html>
