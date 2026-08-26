@@ -580,26 +580,35 @@ export default function DashboardPage() {
                   </button>
 
                   {showSimMenu && (
-                    <div className="absolute right-0 mt-2 w-64 bg-[#0e0e11] border border-white/20 rounded-2xl p-2 shadow-2xl z-50 font-mono text-xs space-y-1">
+                    <div className="absolute right-0 mt-2 w-64 bg-[#10121a] border border-white/25 rounded-2xl p-2 shadow-2xl z-50 font-mono text-xs space-y-1 backdrop-blur-none">
                       <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 border-b border-white/10 uppercase tracking-wider">
                         Interactive In-Browser Scenarios
                       </div>
                       <button
-                        onClick={() => runSimulationScenario("full_chain")}
+                        onClick={() => {
+                          runSimulationScenario("full_chain");
+                          setShowSimMenu(false);
+                        }}
                         className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
                       >
                         <Flame className="w-3.5 h-3.5 text-red-400" />
                         <span>Run Full Attack Chain</span>
                       </button>
                       <button
-                        onClick={() => runSimulationScenario("env_theft")}
+                        onClick={() => {
+                          runSimulationScenario("env_theft");
+                          setShowSimMenu(false);
+                        }}
                         className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
                       >
                         <Shield className="w-3.5 h-3.5 text-orange-400" />
                         <span>.env Credential Theft</span>
                       </button>
                       <button
-                        onClick={() => runSimulationScenario("shell_spawn")}
+                        onClick={() => {
+                          runSimulationScenario("shell_spawn");
+                          setShowSimMenu(false);
+                        }}
                         className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
                       >
                         <Terminal className="w-3.5 h-3.5 text-white" />
@@ -607,7 +616,10 @@ export default function DashboardPage() {
                       </button>
                       <div className="border-t border-white/10 my-1"></div>
                       <button
-                        onClick={clearSimulation}
+                        onClick={() => {
+                          clearSimulation();
+                          setShowSimMenu(false);
+                        }}
                         className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-950/60 hover:text-red-300 text-slate-400 transition-colors flex items-center gap-2"
                       >
                         <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
@@ -729,7 +741,7 @@ export default function DashboardPage() {
                   </div>
 
                   {/* ─── Column 3: Dedicated Behavioral Threat Intelligence ─── */}
-                  <div className={`w-full lg:w-80 xl:w-96 glass-panel border border-white/10 rounded-3xl flex-col shrink-0 overflow-hidden h-full ${mobileView === "threats" ? "flex" : "hidden lg:flex"}`}>
+                  <div className={`w-full lg:w-72 xl:w-80 glass-panel border border-white/10 rounded-3xl flex-col shrink-0 overflow-hidden h-full ${mobileView === "threats" ? "flex" : "hidden lg:flex"}`}>
                     <ThreatPanel narrations={narrations} />
                   </div>
                 </>
@@ -836,7 +848,7 @@ export default function DashboardPage() {
               )}
 
               {/* ─── Column 4: Dedicated Live Event Stream Sidebar ─── */}
-              <div className={`w-full lg:w-72 xl:w-80 glass-panel border border-white/10 rounded-3xl flex-col shrink-0 overflow-hidden h-full ${mobileView === "events" ? "flex" : "hidden lg:flex"}`}>
+              <div className={`w-full lg:w-64 xl:w-72 glass-panel border border-white/10 rounded-3xl flex-col shrink-0 overflow-hidden h-full ${mobileView === "events" ? "flex" : "hidden lg:flex"}`}>
                 {/* Sidebar Header */}
                 <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-white/5 font-mono">
                   <div className="flex items-center gap-2">
