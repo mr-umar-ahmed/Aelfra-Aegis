@@ -541,7 +541,7 @@ export default function DashboardPage() {
           {/* ─── Main Workspace Area ─── */}
           <div className="flex-1 flex flex-col min-w-0 h-full">
             {/* Top Navigation Header Bar */}
-            <header className="bg-white/5 border border-white/10 rounded-2xl px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 mb-2 font-mono text-xs backdrop-blur-xl">
+            <header className="relative z-50 bg-white/5 border border-white/10 rounded-2xl px-3 sm:px-4 py-2 flex items-center justify-between shrink-0 mb-2 font-mono text-xs backdrop-blur-xl">
               {/* Left Live Metrics (Responsive) */}
               <div className="flex items-center gap-2 sm:gap-3 text-[11px] sm:text-xs">
                 <div className="flex items-center gap-1">
@@ -580,52 +580,59 @@ export default function DashboardPage() {
                   </button>
 
                   {showSimMenu && (
-                    <div className="absolute right-0 mt-2 w-64 bg-[#10121a] border border-white/25 rounded-2xl p-2 shadow-2xl z-50 font-mono text-xs space-y-1 backdrop-blur-none">
-                      <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 border-b border-white/10 uppercase tracking-wider">
-                        Interactive In-Browser Scenarios
+                    <>
+                      {/* Click-away backdrop to close menu */}
+                      <div
+                        className="fixed inset-0 z-40 bg-transparent"
+                        onClick={() => setShowSimMenu(false)}
+                      />
+                      <div className="absolute right-0 mt-2 w-64 bg-[#10121a] border border-white/30 rounded-2xl p-2 shadow-[0_20px_50px_rgba(0,0,0,0.95)] z-50 font-mono text-xs space-y-1">
+                        <div className="px-3 py-1.5 text-[10px] font-bold text-slate-400 border-b border-white/10 uppercase tracking-wider">
+                          Interactive In-Browser Scenarios
+                        </div>
+                        <button
+                          onClick={() => {
+                            runSimulationScenario("full_chain");
+                            setShowSimMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                        >
+                          <Flame className="w-3.5 h-3.5 text-red-400" />
+                          <span>Run Full Attack Chain</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            runSimulationScenario("env_theft");
+                            setShowSimMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                        >
+                          <Shield className="w-3.5 h-3.5 text-orange-400" />
+                          <span>.env Credential Theft</span>
+                        </button>
+                        <button
+                          onClick={() => {
+                            runSimulationScenario("shell_spawn");
+                            setShowSimMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
+                        >
+                          <Terminal className="w-3.5 h-3.5 text-white" />
+                          <span>Reverse Shell Spawn</span>
+                        </button>
+                        <div className="border-t border-white/10 my-1"></div>
+                        <button
+                          onClick={() => {
+                            clearSimulation();
+                            setShowSimMenu(false);
+                          }}
+                          className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-950/60 hover:text-red-300 text-slate-400 transition-colors flex items-center gap-2"
+                        >
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+                          <span>Reset Canvas & State</span>
+                        </button>
                       </div>
-                      <button
-                        onClick={() => {
-                          runSimulationScenario("full_chain");
-                          setShowSimMenu(false);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
-                      >
-                        <Flame className="w-3.5 h-3.5 text-red-400" />
-                        <span>Run Full Attack Chain</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          runSimulationScenario("env_theft");
-                          setShowSimMenu(false);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
-                      >
-                        <Shield className="w-3.5 h-3.5 text-orange-400" />
-                        <span>.env Credential Theft</span>
-                      </button>
-                      <button
-                        onClick={() => {
-                          runSimulationScenario("shell_spawn");
-                          setShowSimMenu(false);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center gap-2"
-                      >
-                        <Terminal className="w-3.5 h-3.5 text-white" />
-                        <span>Reverse Shell Spawn</span>
-                      </button>
-                      <div className="border-t border-white/10 my-1"></div>
-                      <button
-                        onClick={() => {
-                          clearSimulation();
-                          setShowSimMenu(false);
-                        }}
-                        className="w-full text-left px-3 py-2 rounded-xl hover:bg-red-950/60 hover:text-red-300 text-slate-400 transition-colors flex items-center gap-2"
-                      >
-                        <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-                        <span>Reset Canvas & State</span>
-                      </button>
-                    </div>
+                    </>
                   )}
                 </div>
 
