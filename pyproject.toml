@@ -110,7 +110,7 @@ Changelog     = "https://github.com/mr-umar-ahmed/Aelfra-Aegis/blob/main/CHANGEL
 # -----------------------------------------------------------------------------
 [tool.setuptools.packages.find]
 where   = ["."]
-include = ["aegis*"]
+include = ["aegis", "aegis.*"]
 exclude = [
     "tests*",
     "dashboard*",

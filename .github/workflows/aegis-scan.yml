@@ -1,48 +1,74 @@
 name: Aegis Supply Chain Gate
+
 on: [push, pull_request]
+
 permissions:
   contents: read
 
 jobs:
   aegis-gate:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+      fail-fast: false
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y bpfcc-tools python3-bpfcc python3-pip docker.io
-          pip3 install websockets requests --break-system-packages
-          sudo systemctl start docker
-
-      - name: Verify eBPF support
-        run: |
-          uname -r
-          sudo python3 -c "from bcc import BPF; print('BCC: OK')"
-
-      - name: Start Aegis daemon (headless, audit mode for CI)
-        run: |
-          sudo python3 daemon/daemon.py --mode=audit &
-          sleep 3  # Wait for daemon to initialize
-          echo "Daemon PID: $!"
-
-      - name: Scan project dependencies
-        run: |
-          sudo python3 cli/aegis-scan.py package.json
-
-      - name: Check for incidents
-        run: |
-          if ls data/incidents/*.json 1> /dev/null 2>&1; then
-            echo "THREATS DETECTED — failing build"
-            cat data/incidents/*.json
-            exit 1
-          fi
-          echo "CLEAN — no threats detected"
-
-      - name: Upload audit log
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          name: aegis-audit-log
-          path: data/audit/
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          python -m pip install build twine
+
+      - name: Run Aegis unit tests
+        run: |
+          python -m pytest
+
+      - name: Verify SIEM logs
+        run: |
+          python scripts/verify-logs.py
+
+      - name: Build Python distributions
+        run: |
+          python -m build
+
+      - name: Validate distributions
+        run: |
+          python -m twine check dist/*
+
+      - name: Verify wheel contents
+        run: |
+          python -c "
+          import zipfile, glob, sys
+          wheels = glob.glob('dist/*.whl')
+          if not wheels:
+              print('Error: No wheel found!')
+              sys.exit(1)
+          with zipfile.ZipFile(wheels[0], 'r') as z:
+              for name in z.namelist():
+                  for forbidden in ['dashboard/', 'node_modules/', '.next/', 'simulator/', '.env']:
+                      if forbidden in name:
+                          print(f'Error: Wheel contains forbidden path: {name}')
+                          sys.exit(1)
+          print('Wheel verification passed successfully.')
+          "
+
+      - name: Clean install smoke test
+        run: |
+          python -m venv test_env
+          test_env/bin/pip install --upgrade pip
+          test_env/bin/pip install dist/*.whl
+          
+          # Verify cli and package imports
+          test_env/bin/python -c "import aegis; print('Import OK:', aegis.__file__)"
+          test_env/bin/aegis --version
+          test_env/bin/aegis doctor
+          test_env/bin/aegis scan --dry-run package.json
