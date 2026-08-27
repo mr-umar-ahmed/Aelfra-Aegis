@@ -1,0 +1,160 @@
+# =============================================================================
+# Aelfra Aegis — pyproject.toml
+# PEP 517/518/621 compliant build manifest for PyPI publication.
+# =============================================================================
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+# -----------------------------------------------------------------------------
+# Project Metadata
+# -----------------------------------------------------------------------------
+[project]
+name = "aelfra-aegis"
+version = "1.0.0"
+description = "Kernel-level eBPF / Win32 runtime supply chain attack detector and autonomous defense tool"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.9"
+
+authors = [
+    { name = "Umar Ahmed", email = "umar@aelfra.security" },
+]
+
+keywords = [
+    "security",
+    "ebpf",
+    "supply-chain",
+    "runtime-defense",
+    "threat-detection",
+    "siem",
+    "kernel",
+    "windows",
+    "linux",
+    "mitre-attack",
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: MacOS",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Systems Administration",
+    "Typing :: Typed",
+]
+
+# Core dependencies — deliberately minimal.
+# All standard library. websockets is optional (only needed for interactive dashboard mode).
+dependencies = []
+
+# -----------------------------------------------------------------------------
+# Optional Feature Groups
+# -----------------------------------------------------------------------------
+[project.optional-dependencies]
+
+# Interactive WebSocket bridge → Next.js dashboard
+dashboard = [
+    "websockets>=11.0",
+]
+
+# Grafana Loki log shipping (stdlib urllib used by default; aiohttp for async)
+loki = [
+    "websockets>=11.0",
+]
+
+# Full feature bundle
+full = [
+    "websockets>=11.0",
+]
+
+# Development / CI toolchain
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.0",
+]
+
+# -----------------------------------------------------------------------------
+# CLI Entry Points
+# -----------------------------------------------------------------------------
+[project.scripts]
+aegis = "aegis.cli.main:main"
+
+# -----------------------------------------------------------------------------
+# Project URLs
+# -----------------------------------------------------------------------------
+[project.urls]
+Homepage      = "https://github.com/mr-umar-ahmed/Aelfra-Aegis"
+Documentation = "https://github.com/mr-umar-ahmed/Aelfra-Aegis/blob/main/AEGIS_MASTER_GUIDE.md"
+Repository    = "https://github.com/mr-umar-ahmed/Aelfra-Aegis.git"
+"Bug Tracker" = "https://github.com/mr-umar-ahmed/Aelfra-Aegis/issues"
+Changelog     = "https://github.com/mr-umar-ahmed/Aelfra-Aegis/blob/main/CHANGELOG.md"
+
+# -----------------------------------------------------------------------------
+# setuptools Package Discovery
+# -----------------------------------------------------------------------------
+[tool.setuptools.packages.find]
+where   = ["."]
+include = ["aegis*"]
+exclude = [
+    "tests*",
+    "dashboard*",
+    "simulator*",
+    "demo*",
+    "benchmarks*",
+    "baselines*",
+    "scripts*",
+    "sensor*",
+    "monitoring*",
+    "cli*",
+    "daemon*",
+    "ebpf*",
+]
+
+# Non-Python files that must be included in the installed package
+[tool.setuptools.package-data]
+aegis = [
+    "assets/*.json",
+    "assets/*.c",
+    "assets/**/*",
+    "py.typed",
+]
+
+# -----------------------------------------------------------------------------
+# pytest configuration
+# -----------------------------------------------------------------------------
+[tool.pytest.ini_options]
+testpaths    = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts      = "-v --tb=short"
+
+# -----------------------------------------------------------------------------
+# Coverage (optional — used with pytest-cov)
+# -----------------------------------------------------------------------------
+[tool.coverage.run]
+source = ["aegis"]
+omit   = [
+    "aegis/core/telemetry/linux_ebpf.py",   # Requires live Linux kernel / BCC
+    "tests/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = false

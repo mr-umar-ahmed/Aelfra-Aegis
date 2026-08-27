@@ -1,0 +1,102 @@
+{
+  "version": "1.0",
+  "rules": [
+    {
+      "id": "CRED_001",
+      "name": "Credential File Access",
+      "description": "Process accessed a known credential file path",
+      "severity": "CRITICAL",
+      "mitre_technique": "T1552.001",
+      "event_type": "file",
+      "conditions": {
+        "fname_contains_any": [
+          ".env",
+          ".aws/credentials",
+          ".ssh/id_rsa",
+          ".ssh/id_ed25519",
+          "secrets.json",
+          ".netrc",
+          "token.json",
+          "keystore"
+        ],
+        "comm_not_in": [
+          "vim",
+          "cat",
+          "nano",
+          "grep",
+          "less"
+        ]
+      },
+      "action": "alert",
+      "confidence": 85
+    },
+    {
+      "id": "EXEC_001",
+      "name": "Suspicious Child Process from Package Manager",
+      "description": "npm or pip spawned an unexpected shell or network tool",
+      "severity": "HIGH",
+      "mitre_technique": "T1059.004",
+      "event_type": "exec",
+      "conditions": {
+        "parent_comm_in": [
+          "npm",
+          "pip",
+          "pip3",
+          "node"
+        ],
+        "fname_contains_any": [
+          "bash",
+          "sh",
+          "curl",
+          "wget",
+          "nc",
+          "python"
+        ]
+      },
+      "action": "alert",
+      "confidence": 90
+    },
+    {
+      "id": "NET_001",
+      "name": "Unexpected Outbound Connection from Install Process",
+      "description": "Package install process made network connection",
+      "severity": "HIGH",
+      "mitre_technique": "T1071.001",
+      "event_type": "network",
+      "conditions": {
+        "parent_comm_in": [
+          "npm",
+          "pip",
+          "pip3",
+          "node"
+        ],
+        "exclude_private_ips": true,
+        "dest_port_not_in": [
+          80,
+          443,
+          8080
+        ]
+      },
+      "action": "alert",
+      "confidence": 75
+    },
+    {
+      "id": "CHAIN_001",
+      "name": "Full Credential Exfiltration Chain",
+      "description": "File read + network connect from same PID within 30 seconds",
+      "severity": "CRITICAL",
+      "mitre_technique": "T1020",
+      "event_type": "chain",
+      "conditions": {
+        "requires_sequence": [
+          "CRED_001",
+          "NET_001"
+        ],
+        "within_seconds": 30,
+        "same_pid": true
+      },
+      "action": "kill",
+      "confidence": 97
+    }
+  ]
+}

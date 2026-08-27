@@ -1,0 +1,2 @@
+# PEP 561 — marks aegis as a typed package.
+# Presence of this file tells type checkers that inline type annotations are available.

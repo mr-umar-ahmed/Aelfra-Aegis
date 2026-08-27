@@ -11,8 +11,34 @@ node_modules/
 # Python cache & databases
 __pycache__/
 *.pyc
+*.pyo
 data/*
 !data/.gitkeep
 
 # Environment files
 .env
+
+# Python packaging build artifacts
+dist/
+build/
+*.egg-info/
+*.egg
+.eggs/
+
+# Python type checking caches
+.mypy_cache/
+.pyright/
+.ruff_cache/
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDE and OS artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

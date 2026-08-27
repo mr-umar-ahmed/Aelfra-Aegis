@@ -1,0 +1,40 @@
+# MANIFEST.in
+# Controls which non-Python files are included in the source distribution (sdist).
+# See: https://packaging.python.org/en/latest/guides/using-manifest-in/
+
+# Include essential documentation
+include README.md
+include LICENSE
+include CHANGELOG.md
+include .env.example
+
+# Include bundled package assets (detection rules and eBPF C probes)
+recursive-include aegis/assets *
+
+# Include type marker
+include aegis/py.typed
+
+# Exclude build artifacts, dev directories, and CI-only files
+exclude .env
+prune .venv
+prune .git
+prune .github
+prune dashboard
+prune simulator
+prune demo
+prune benchmarks
+prune baselines
+prune scripts
+prune sensor
+prune monitoring
+prune cli
+prune daemon
+prune ebpf
+prune data
+prune *.egg-info
+prune __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .DS_Store
+global-exclude *.log
+global-exclude *.jsonl

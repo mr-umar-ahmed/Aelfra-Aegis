@@ -1,4 +1,4 @@
-# AEGIS — eBPF Supply Chain Attack Detector
+# Aelfra Aegis — Runtime Supply Chain Attack Detection & Defense
 
 ```text
     _     _____ ____ ___ ____  
@@ -8,161 +8,210 @@
 /_/   \_\|______\____|___|____/ 
 ```
 
-### eBPF-Powered Supply Chain Runtime Intrusion Detection & Autonomous Defense
-[![Aegis Security Gate](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions/workflows/aegis-scan.yml/badge.svg)](https://github.com/mr-umar-ahmed/Aelfra-Aegis/actions/workflows/aegis-scan.yml)
+[![PyPI version](https://img.shields.io/badge/pypi-v1.0.0-blue.svg)](https://pypi.org/project/aelfra-aegis/)
+[![Python: 3.9+](https://img.shields.io/badge/python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](https://pypi.org/project/aelfra-aegis/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Language](https://img.shields.io/badge/language-C%20%7C%20Python%20%7C%20Next.js-blue.svg)](#tech-stack)
-[![Documentation](https://img.shields.io/badge/Docs-AEGIS__MASTER__GUIDE.md-emerald.svg)](AEGIS_MASTER_GUIDE.md)
+[![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20Windows%20%7C%20macOS-lightgrey.svg)](#platform-support)
 
-> 📖 **Comprehensive System Blueprint**: For the complete all-in-one technical manual covering the problem statement, technology stack, competitive comparisons, architecture diagrams, all 11+ features, and enterprise deployment guides, read [**`AEGIS_MASTER_GUIDE.md`**](AEGIS_MASTER_GUIDE.md).
-
----
-
-## What is Aegis?
-
-Aegis is an open-source, kernel-level runtime guard designed to detect and block supply chain attacks in real-time. By leveraging eBPF (Extended Berkeley Packet Filter) probes attached directly inside the Linux kernel, Aegis intercepts critical system calls—such as file opens, process executions, and TCP network connections. This approach allows security teams to identify malicious activities, such as exfiltrating `.env` credentials, running unauthorized shells, or initiating cryptomining connections, directly at the OS level without any modification to application code.
-
-Traditional static analysis scanners look for known vulnerabilities inside dependency lockfiles, failing to flag sophisticated Zero-Day attacks or typosquatted packages containing dynamic postinstall execution chains. Aegis runs alongside package installations, analyzing process behaviors, correlating multi-step attack patterns with a hot-reloading JSON policy engine, and offering autonomous runtime blocking via `SIGKILL` without requiring human intervention.
+Aelfra Aegis is a cross-platform, runtime software supply chain security tool and Python engine. It monitors system-level activity during build, package install, and execution to detect and neutralize malicious behavior—such as credential exfiltration, unexpected shell spawning, and suspicious network egress.
 
 ---
 
-## System Architecture
+## Key Features
 
-```mermaid
-graph TD
-    subgraph "Linux Kernel Space"
-        A[sys_enter_openat Probe] -->|Capture env reads| D[eBPF Ring Buffer]
-        B[sys_enter_execve Probe] -->|Capture spawn/shells| D
-        C[tcp_connect Probe] -->|Capture outbounds| D
-    end
-
-    subgraph "User Space Daemon"
-        D -->|Poll Events| E[Python eBPF Daemon]
-        R[config/rules.json Policy Engine] -->|Hot-Reloading Rules| E
-        E -->|Store Data| F[(SQLite Database /data/aegis.db)]
-        E -->|Heuristics & Risk Scoring| G[Threat Narration Engine]
-        G -->|Trigger Anthropic / Groq API| H[AI Threat Narrator]
-        E -->|Autonomous SIGKILL| K[Headless Threat Blocker]
-    end
-
-    subgraph "Next.js Dashboard Console"
-        E -->|WebSockets ws://8765| I[React Flow Provenance Graph]
-        I -->|Interactive Kill Switch| E
-        J[Timeline tab] -->|Fetch History| F
-        L[Export Report] -->|Generate Report| M[HTML Report Download]
-    end
-```
+- **Multi-Platform Telemetry Engine**:
+  - **Linux**: Live eBPF kprobes and ring buffer event capture (`openat`, `execve`, `tcp_connect`) via BCC.
+  - **Windows**: Live Win32 native telemetry (`CreateToolhelp32Snapshot` process tracking and `GetExtendedTcpTable` socket inspection) using standard library `ctypes`.
+  - **macOS / Non-Privileged**: Synthetic Mock Mode for development, testing, and continuous integration.
+- **Declarative Policy Rule Engine**: Hot-reloading JSON detection rules with MITRE ATT&CK taxonomy mapping.
+- **Multi-Stage Temporal Chain Correlation**: Tracks multi-step attacks across processes (e.g. credential read followed by network connect).
+- **SIEM-Compatible Audit Logging**: Self-contained, append-only JSON Lines (`.jsonl`) audit trail with daily UTC rotation.
+- **Autonomous Threat Blocking**: Headless mode with sub-50ms process termination (`SIGKILL`) on high-confidence rule matches.
+- **Unified CLI Tool**: Inspect system capabilities (`aegis doctor`), supervise commands (`aegis protect`), and scan dependencies (`aegis scan`).
 
 ---
 
-## Daemon Execution Modes
+## Installation
 
-The Aegis daemon supports three distinct operational modes tailored for development, production CI/CD pipelines, and compliance auditing:
+### Base Package (Core Engine & CLI)
+
+The base package has **zero mandatory third-party dependencies** and runs entirely on the Python Standard Library:
 
 ```bash
-# 1. Interactive Mode (Default) — Starts WebSocket server for Next.js dashboard UI
-python3 daemon/daemon.py --mode=interactive
+pip install aelfra-aegis
+```
 
-# 2. Headless Mode (Autonomous CI/CD Guard) — Automatically kills high-confidence threats (>= 90%)
-python3 daemon/daemon.py --mode=headless --threshold=90
+### Optional Extras
 
-# 3. Audit Mode (Passive Compliance Log) — Logs all matched events to data/audit/*.jsonl without killing
-python3 daemon/daemon.py --mode=audit
+- **Dashboard / WebSocket Bridge**:
+  ```bash
+  pip install "aelfra-aegis[dashboard]"
+  ```
+- **Full Bundle**:
+  ```bash
+  pip install "aelfra-aegis[full]"
+  ```
+- **Development & Testing Toolchain**:
+  ```bash
+  pip install "aelfra-aegis[dev]"
+  ```
+
+---
+
+## Quick Start (CLI)
+
+### 1. Diagnose Environment Capabilities
+
+Run the built-in diagnostic suite to inspect available telemetry backends, privilege levels, and container tools:
+
+```bash
+aegis doctor
+```
+
+Output example on Windows:
+```text
+════════════════════════════════════════════════════════════════
+               AELFRA AEGIS SYSTEM DIAGNOSTICS                  
+════════════════════════════════════════════════════════════════
+
+[1/4] Operating System & Environment:
+   • OS Platform      : Windows (AMD64)
+   • Kernel Version   : 11
+   • Python Runtime   : Python 3.14.6
+
+[2/4] Kernel & OS Telemetry Capabilities:
+   • Active Backend   : ✅ Windows Native Telemetry (Win32 API)
+   • Backend Status   : ✅ ACTIVE
+   • Process Privilege: ℹ️ Standard User (Win32 Process & Socket Telemetry Active)
+
+[3/4] Containerization & Telemetry:
+   • Docker Engine    : ✅ Active
+   • Aegis Daemon     : ⚪ Inactive (Run 'aegis start' to activate)
+
+[4/4] Capability Assessment:
+   🎉 STATUS: READY — Live Windows Native Telemetry (Win32 API) (Process Creation & Network Sockets)
+════════════════════════════════════════════════════════════════
+```
+
+### 2. Guard Command Execution
+
+Supervise package managers, build scripts, or arbitrary processes with active runtime monitoring:
+
+```bash
+aegis protect npm install
+# or
+aegis protect pip install -r requirements.txt
+```
+
+### 3. Scan Dependency Manifests in Isolated Containers
+
+```bash
+aegis scan package.json
+# or dry-run without spinning up containers:
+aegis scan --dry-run requirements.txt
+```
+
+### 4. Background Security Daemon
+
+```bash
+# Start background daemon in autonomous headless auto-block mode
+aegis start --mode=headless --threshold=90
+
+# Check daemon status
+aegis status
+
+# View SIEM audit log stream
+aegis logs -n 30
+
+# Inspect forensic incident reports
+aegis report
+
+# Stop background daemon
+aegis stop
 ```
 
 ---
 
-## Custom Detection Rules
+## Python API Usage
 
-Aegis uses a declarative, hot-reloading policy engine located at `config/rules.json`. The daemon watches this file using file mtime checks and reloads rules automatically every 5 seconds without requiring a restart.
+Embed Aegis telemetry and detection directly into your Python security tools:
 
-### Rule Structure
+```python
+from aegis.core.telemetry import TelemetryManager
+from aegis.core.rule_engine import RuleEngine
+from aegis.core.structured_logger import StructuredLogger
 
-Rules support single-event matching (`file`, `exec`, `network`) and temporal sequence correlation (`chain`).
+# 1. Initialize Rule Engine and Logger
+rule_engine = RuleEngine()
+logger = StructuredLogger()
 
-```json
-{
-  "id": "CRED_001",
-  "name": "Credential File Access",
-  "description": "Process accessed a known credential file path",
-  "severity": "CRITICAL",
-  "mitre_technique": "T1552.001",
-  "event_type": "file",
-  "conditions": {
-    "fname_contains_any": [".env", ".aws/credentials", ".ssh/id_rsa"],
-    "comm_not_in": ["vim", "cat", "nano", "grep", "less"]
-  },
-  "action": "alert",
-  "confidence": 85
-}
+# 2. Define event callback
+def on_security_event(event):
+    matches = rule_engine.evaluate_event(event)
+    for match in matches:
+        print(f"🚨 Threat detected: {match['rule_name']} ({match['rule_id']})")
+        logger.log_event(event, rule_match=match, action_taken="alert")
+
+# 3. Start Telemetry Manager (auto-selects best available backend)
+telemetry = TelemetryManager(callback=on_security_event)
+telemetry.start()
+
+print(f"Active Backend: {telemetry.get_status()['selected_backend']}")
 ```
 
-### Example: Adding a PyPI Package Postinstall Hook Detector
+---
 
-To detect malicious PyPI packages executing child shell scripts during `pip install`, add the following rule to `config/rules.json`:
+## Platform Support & Capabilities
+
+| Operating System | Active Telemetry Backend | Mechanism | Required Privileges | Capability Level |
+| :--- | :--- | :--- | :--- | :--- |
+| **Linux (Kernel 5.4+)** | `LinuxEBPFBackend` | BCC kprobes (`openat`, `execve`, `connect`) | Root (`sudo`) / `CAP_BPF` | `READY` (Full live kernel interception) |
+| **Linux (Non-Root)** | `MockTelemetryBackend` | Synthetic event stream fallback | Standard user | `LIMITED` (Elevate with sudo for live probes) |
+| **Windows 10/11 / Server** | `WindowsNativeBackend` | Win32 `Toolhelp32` + `GetExtendedTcpTable` | Standard user or Administrator | `READY` (Live process & network socket tracking) |
+| **macOS / Other** | `MockTelemetryBackend` | Synthetic event stream fallback | Standard user | `MOCK` (Development & CI mode) |
+
+---
+
+## Policy Rule Engine
+
+Aegis uses declarative JSON detection rules. Rules support single-event conditions and temporal attack chains.
+
+### Example: Credential Theft Exfiltration Chain
 
 ```json
 {
-  "id": "PYPI_001",
-  "name": "PyPI Package Postinstall Shell Spawn",
-  "description": "pip spawned unexpected shell reconnaissance during package build",
-  "severity": "HIGH",
-  "mitre_technique": "T1059.006",
-  "event_type": "exec",
+  "id": "CHAIN_001",
+  "name": "Full Credential Exfiltration Chain",
+  "description": "Sensitive file access followed by unexpected outbound network connection from the same PID within 30s",
+  "severity": "CRITICAL",
+  "mitre_technique": "T1020",
+  "event_type": "chain",
   "conditions": {
-    "parent_comm_in": ["pip", "pip3", "python", "python3"],
-    "fname_contains_any": ["setup.py", "bash", "sh", "curl", "wget", "whoami"]
+    "requires_sequence": ["CRED_001", "NET_001"],
+    "within_seconds": 30,
+    "same_pid": true
   },
   "action": "kill",
-  "confidence": 92
+  "confidence": 97
 }
 ```
 
 ---
 
-## Comparison Matrix
+## Security & Privacy Considerations
 
-| Feature | Aegis | Falco | Tracee |
-| :--- | :--- | :--- | :--- |
-| **Detection Method** | eBPF Kernel Probes (C) | eBPF / Kernel Module | eBPF Kernel Probes |
-| **Config Language** | JSON Policy Rules with Hot-Reload | Static YAML Rules | Go / OPA Signatures |
-| **Autonomous Blocking** | Built-in Headless SIGKILL (< 50ms) | Requires FalcoSidekick | Requires separate agent |
-| **Visualization** | Interactive React Flow Graph | CLI / External Dashboard | CLI / JSON Stream |
-| **CI/CD Integration** | Standalone CLI + GitHub Actions | External Plugins | Integration needed |
-| **AI Narration** | Plain-English AI Threat Narratives | None (Structured Logs) | None (Structured Logs) |
-| **Overhead** | Very Low (< 1% CPU overhead) | Low (Varies with rules) | Low (Varies with rules) |
+- **No Data Exfiltration**: Aegis writes audit logs and incident reports exclusively to local paths (`~/.aegis/` or `/var/lib/aegis/`).
+- **Zero-Privilege Escalation**: Does not install kernel drivers or modify operating system binaries.
+- **Truthful Diagnostics**: Mock telemetry is explicitly reported as `MOCK` capability in diagnostics and never misrepresented as production telemetry.
 
 ---
 
-## Quick Start
+## License
 
-```bash
-# 1. Clone the repository
-git clone https://github.com/mr-umar-ahmed/Aelfra-Aegis.git && cd Aelfra-Aegis
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
-# 2. Setup your local environment
-cp .env.example .env
+## Links & Community
 
-# 3. Start the Next.js Web Dashboard
-cd dashboard && npm install && npm run dev
-
-# 4. Start the eBPF Daemon (Interactive Mode)
-sudo python3 daemon/daemon.py --mode=interactive
-
-# 5. Run the offline Aegis CLI Dependency Scanner (Headless Mode)
-python3 cli/aegis-scan.py simulator/attacks/cred-theft/package.json
-```
-
----
-
-## Modules Built
-
-1. **Module A (Core Sensor)**: eBPF C probes capturing `openat`, `execve`, and `connect` syscalls.
-2. **Module B (Exfiltration Engine)**: Outbound socket tracking correlated against AbuseIPDB databases.
-3. **Module C (Baseline Engine)**: Percentile-based risk scoring (0-100) mapped against 10 clean npm packages.
-4. **Module D (CLI & Actions)**: Sandbox CLI wrapper run inside Docker alongside GitHub Actions CI pipeline.
-5. **Module E (AI Narrator)**: Live AI integration converting event tables to plain-English narratives.
-6. **Module F (Attack Library)**: Mock-ready scripts covering 4 common malicious supply chain patterns.
-7. **Module G (Database & Export)**: Built-in SQLite event indexing with dynamic client-side HTML report export.
-8. **Industry Upgrade 1 (Policy Rule Engine)**: Declarative JSON policy engine with MITRE techniques and hot-reload.
-9. **Industry Upgrade 2 (Headless Auto-Block)**: Autonomous CI/CD threat blocking and passive audit compliance.
+- **Repository**: [github.com/mr-umar-ahmed/Aelfra-Aegis](https://github.com/mr-umar-ahmed/Aelfra-Aegis)
+- **Bug Tracker**: [github.com/mr-umar-ahmed/Aelfra-Aegis/issues](https://github.com/mr-umar-ahmed/Aelfra-Aegis/issues)
+- **Changelog**: [CHANGELOG.md](CHANGELOG.md)
