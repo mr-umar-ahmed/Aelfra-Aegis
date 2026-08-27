@@ -14,6 +14,8 @@ __pycache__/
 *.pyo
 data/*
 !data/.gitkeep
+!data/audit/
+!data/audit/aegis-ci-audit.jsonl
 
 # Environment files
 .env

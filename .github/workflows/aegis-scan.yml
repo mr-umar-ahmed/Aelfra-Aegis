@@ -34,7 +34,7 @@ jobs:
 
       - name: Verify SIEM logs
         run: |
-          python scripts/verify-logs.py
+          python scripts/verify-logs.py data/audit/aegis-ci-audit.jsonl
 
       - name: Build Python distributions
         run: |
